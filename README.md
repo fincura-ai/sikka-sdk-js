@@ -55,20 +55,14 @@ pnpm add @fincuratech/sikka-sdk-js
 ## Quick Start
 
 ```typescript
-import { createSikkaClient, getAuthorizedPractices } from '@fincuratech/sikka-sdk-js';
+import { createSikkaClient } from '@fincuratech/sikka-sdk-js';
 
-// First, list authorized practices (only requires app credentials)
-const practices = await getAuthorizedPractices({
-  appId: 'your-app-id',
-  appKey: 'your-app-key',
-});
-
-// Then create a client for a specific practice/office
+// Create a client with your credentials
 const sikka = createSikkaClient({
   appId: 'your-app-id',
   appKey: 'your-app-key',
-  officeId: practices[0].office_id,
-  secretKey: practices[0].secret_key,
+  officeId: 'practice-office-id',
+  secretKey: 'practice-secret-key',
 });
 
 // Authenticate (required before making other API calls)
@@ -85,25 +79,12 @@ const patients = await sikka.patients.list({
 
 ### Authentication
 
-Sikka uses a two-level authentication system:
+The client is initialized with all credentials upfront:
 
-1. **App-level credentials** (`appId`, `appKey`) - Used to list authorized practices
-2. **Office-level credentials** (`officeId`, `secretKey`) - Used to access practice data
-
-#### `getAuthorizedPractices(credentials)`
-
-List all practices your app has access to. Only requires app credentials.
-
-```typescript
-const practices = await getAuthorizedPractices({
-  appId: 'your-app-id',
-  appKey: 'your-app-key',
-});
-```
-
-**Returns:** `Promise<SikkaAuthorizedPractice[]>`
-
----
+- `appId` - Your Sikka app ID
+- `appKey` - Your Sikka app key
+- `officeId` - The practice/office identifier
+- `secretKey` - The practice secret key
 
 #### `authenticate()`
 
@@ -273,16 +254,11 @@ import type {
   SikkaClient,
   SikkaClientConfig,
   SikkaClientCredentials,
-  SikkaAppCredentials,
 
   // Authentication
   SikkaRequestKeyRequest,
   SikkaRequestKeyResponse,
   SikkaGrantType,
-
-  // Practices
-  SikkaAuthorizedPractice,
-  SikkaAuthorizedPracticesResponse,
 
   // Patients
   SikkaPatient,

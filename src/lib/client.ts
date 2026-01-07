@@ -1,9 +1,6 @@
 import { getLogger } from './logger.js';
 import {
   type SikkaApiError,
-  type SikkaAppCredentials,
-  type SikkaAuthorizedPractice,
-  type SikkaAuthorizedPracticesResponse,
   type SikkaClaim,
   type SikkaClaimListParams,
   type SikkaClaimListResponse,
@@ -22,56 +19,6 @@ import {
 } from './types.js';
 
 const SIKKA_BASE_URL = 'https://api.sikkasoft.com';
-
-/**
- * Get the list of authorized practices for the given app credentials.
- * This is a standalone function that doesn't require office-level authentication.
- *
- * @param appCredentials - App-level credentials (appId and appKey)
- * @param baseUrl - Optional base URL override
- * @returns List of authorized practices
- */
-export const getAuthorizedPractices = async (
-  appCredentials: SikkaAppCredentials,
-  baseUrl: string = SIKKA_BASE_URL,
-): Promise<SikkaAuthorizedPractice[]> => {
-  const log = getLogger();
-
-  log.debug('Sikka API: Fetching authorized practices');
-
-  const response = await fetch(`${baseUrl}/v4/authorized_practices`, {
-    headers: {
-      'App-Id': appCredentials.appId,
-      'App-Key': appCredentials.appKey,
-      'Content-Type': 'application/json',
-    },
-    method: 'GET',
-  });
-
-  if (!response.ok) {
-    let errorMessage = `${response.status} ${response.statusText}`;
-    try {
-      const errorBody = (await response.json()) as SikkaApiError;
-      errorMessage =
-        errorBody.error_description ??
-        errorBody.error ??
-        errorBody.message ??
-        errorMessage;
-    } catch {
-      // Ignore JSON parse errors
-    }
-
-    throw new Error(`Failed to fetch authorized practices: ${errorMessage}`);
-  }
-
-  const data = (await response.json()) as SikkaAuthorizedPracticesResponse;
-
-  log.debug('Sikka API: Fetched authorized practices', {
-    count: data.items.length,
-  });
-
-  return data.items;
-};
 
 /**
  * Sikka API Client

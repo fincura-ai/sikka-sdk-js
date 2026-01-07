@@ -1,10 +1,5 @@
+import { createSikkaClient, SikkaClient } from '../../src/lib/client.js';
 import {
-  createSikkaClient,
-  getAuthorizedPractices,
-  SikkaClient,
-} from '../../src/lib/client.js';
-import {
-  type SikkaAuthorizedPracticesResponse,
   type SikkaClaimListResponse,
   type SikkaPatientListResponse,
   type SikkaRequestKeyResponse,
@@ -51,44 +46,6 @@ const createRequestKeyResponse = (
     status: 'active',
   };
 };
-
-/**
- * Create a mock authorized practices response.
- */
-const createAuthorizedPracticesResponse =
-  (): SikkaAuthorizedPracticesResponse => ({
-    execution_time: '0.5s',
-    items: [
-      {
-        address: '123 Main St',
-        city: 'Test City',
-        data_insert_date: '2024-01-01',
-        data_synchronization_date: '2024-01-01',
-        domain: 'test-domain',
-        email: 'test@example.com',
-        href: 'https://api.sikkasoft.com/v4/practices/1',
-        office_id: 'test-office-id',
-        practice_id: '1',
-        practice_management_system: 'Dentrix',
-        practice_management_system_refresh_date: '2024-01-01',
-        practice_management_system_version: '1.0',
-        practice_name: 'Test Practice',
-        secret_key: 'test-secret-key',
-        state: 'CA',
-        zip: '12345',
-      },
-    ],
-    limit: '100',
-    offset: '0',
-    pagination: {
-      current: '1',
-      first: '1',
-      last: '1',
-      next: '',
-      previous: '',
-    },
-    total_count: '1',
-  });
 
 describe('SikkaClient', () => {
   let client: SikkaClient;
@@ -727,80 +684,6 @@ describe('SikkaClient', () => {
       expect(client2.isAuthenticated()).toBe(true);
       expect(client2.getRequestKey()).toBe('key-2');
     });
-  });
-});
-
-describe('getAuthorizedPractices', () => {
-  let mockFetch: jest.Mock;
-
-  beforeEach(() => {
-    mockFetch = jest.fn();
-    global.fetch = mockFetch;
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('should return list of authorized practices', async () => {
-    const mockResponse = createAuthorizedPracticesResponse();
-    mockFetch.mockResolvedValueOnce({
-      json: () => Promise.resolve(mockResponse),
-      ok: true,
-    });
-
-    const practices = await getAuthorizedPractices({
-      appId: 'test-app-id',
-      appKey: 'test-app-key',
-    });
-
-    expect(practices).toHaveLength(1);
-    expect(practices[0].practice_name).toBe('Test Practice');
-    expect(practices[0].office_id).toBe('test-office-id');
-  });
-
-  it('should send App-Id and App-Key headers', async () => {
-    const mockResponse = createAuthorizedPracticesResponse();
-    mockFetch.mockResolvedValueOnce({
-      json: () => Promise.resolve(mockResponse),
-      ok: true,
-    });
-
-    await getAuthorizedPractices({
-      appId: 'my-app-id',
-      appKey: 'my-app-key',
-    });
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      `${testBaseUrl}/v4/authorized_practices`,
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          'App-Id': 'my-app-id',
-          'App-Key': 'my-app-key',
-        }),
-        method: 'GET',
-      }),
-    );
-  });
-
-  it('should throw on error response', async () => {
-    mockFetch.mockResolvedValueOnce({
-      json: () =>
-        Promise.resolve({
-          error: 'invalid_credentials',
-          error_description: 'Invalid app key',
-        }),
-      ok: false,
-      status: 401,
-      statusText: 'Unauthorized',
-    });
-
-    await expect(
-      getAuthorizedPractices({
-        appId: 'bad-id',
-        appKey: 'bad-key',
-      }),
-    ).rejects.toThrow('Failed to fetch authorized practices: Invalid app key');
   });
 });
 

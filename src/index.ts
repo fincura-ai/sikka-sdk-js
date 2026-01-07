@@ -1,8 +1,4 @@
-export {
-  createSikkaClient,
-  getAuthorizedPractices,
-  SikkaClient,
-} from './lib/client.js';
+export { createSikkaClient, SikkaClient } from './lib/client.js';
 export {
   createConsoleLogger,
   createNoOpLogger,
