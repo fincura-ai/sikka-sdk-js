@@ -366,3 +366,66 @@ export type SikkaClaimPaymentResponse = {
   message: string;
   status: string;
 };
+
+// -----------------------------------------------------------------------------
+// Payment Type Types
+
+/**
+ * Sikka payment type record
+ */
+export type SikkaPaymentType = {
+  code: string;
+  description: string;
+  href: string;
+  practice_href: string;
+  practice_id: string;
+};
+
+/**
+ * Parameters for listing payment types
+ */
+export type SikkaPaymentTypeListParams = {
+  /**
+   * Filter by payment type code in practice management system
+   */
+  code?: string;
+  /**
+   * Customer ID of office
+   */
+  customer_id?: string;
+  /**
+   * If true, returns Credit Adjustment Types only
+   */
+  is_adjustment_type?: boolean;
+  /**
+   * If true, returns Payment Types which require credit card details
+   * for POST transaction (Planet DDS PMS only)
+   */
+  are_credit_card_details_required?: boolean;
+  /**
+   * If true, returns Debit Adjustment Types only
+   */
+  is_debit_adjustment_type?: boolean;
+  /**
+   * If true, returns Insurance Payment Types only
+   */
+  is_insurance_type?: boolean;
+  /**
+   * Results per page
+   */
+  limit?: number;
+  /**
+   * Pagination offset
+   */
+  offset?: number;
+  /**
+   * Practice ID of office
+   */
+  practice_id?: string;
+};
+
+/**
+ * Response from the payment_types endpoint
+ */
+export type SikkaPaymentTypeListResponse =
+  SikkaPaginatedResponse<SikkaPaymentType>;

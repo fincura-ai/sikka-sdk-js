@@ -11,6 +11,9 @@ import {
   type SikkaPatient,
   type SikkaPatientListParams,
   type SikkaPatientListResponse,
+  type SikkaPaymentType,
+  type SikkaPaymentTypeListParams,
+  type SikkaPaymentTypeListResponse,
   type SikkaRequestKeyRequest,
   type SikkaRequestKeyResponse,
   type SikkaTransaction,
@@ -183,6 +186,77 @@ export class SikkaClient {
 
       const response = await this.get<SikkaPatientListResponse>(
         '/v4/patients',
+        queryParams,
+      );
+      return response.items;
+    },
+  };
+
+  /**
+   * Payment types management endpoints.
+   * Payment types represent the different methods a practice accepts for payments.
+   */
+  public readonly paymentTypes = {
+    /**
+     * List payment types for the practice.
+     *
+     * @param params - Optional filter and pagination parameters
+     * @returns List of payment types
+     *
+     * @example
+     * ```typescript
+     * // Get all payment types
+     * const types = await client.paymentTypes.list();
+     *
+     * // Get only insurance payment types
+     * const insuranceTypes = await client.paymentTypes.list({
+     *   is_insurance_type: true,
+     * });
+     * ```
+     */
+    list: async (
+      params: SikkaPaymentTypeListParams = {},
+    ): Promise<SikkaPaymentType[]> => {
+      const queryParams: Record<string, string> = {};
+
+      if (params.code) {
+        queryParams.code = params.code;
+      }
+
+      if (params.customer_id) {
+        queryParams.customer_id = params.customer_id;
+      }
+
+      if (params.practice_id) {
+        queryParams.practice_id = params.practice_id;
+      }
+
+      if (params.is_adjustment_type) {
+        queryParams.is_adjustment_type = 'true';
+      }
+
+      if (params.is_debit_adjustment_type) {
+        queryParams.is_debit_adjustment_type = 'true';
+      }
+
+      if (params.is_insurance_type) {
+        queryParams.is_insurance_type = 'true';
+      }
+
+      if (params.are_credit_card_details_required) {
+        queryParams.are_credit_card_details_required = 'true';
+      }
+
+      if (params.limit) {
+        queryParams.limit = String(params.limit);
+      }
+
+      if (params.offset) {
+        queryParams.offset = String(params.offset);
+      }
+
+      const response = await this.get<SikkaPaymentTypeListResponse>(
+        '/v4/payment_types',
         queryParams,
       );
       return response.items;

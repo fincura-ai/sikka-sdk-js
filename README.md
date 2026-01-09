@@ -162,6 +162,43 @@ const claims = await sikka.claims.list({
 
 ---
 
+### Payment Types
+
+#### `paymentTypes.list(params)`
+
+List payment types configured for the practice.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `code` | string | | Filter by payment type code |
+| `practice_id` | string | | Filter by practice ID |
+| `customer_id` | string | | Filter by customer ID |
+| `is_insurance_type` | boolean | | Return only insurance payment types |
+| `is_adjustment_type` | boolean | | Return only credit adjustment types |
+| `is_debit_adjustment_type` | boolean | | Return only debit adjustment types |
+| `are_credit_card_details_required` | boolean | | Return types requiring credit card details (Planet DDS only) |
+| `limit` | number | | Results per page |
+| `offset` | number | | Pagination offset |
+
+**Returns:** `Promise<SikkaPaymentType[]>`
+
+```typescript
+// Get all payment types
+const types = await sikka.paymentTypes.list();
+
+// Get only insurance payment types
+const insuranceTypes = await sikka.paymentTypes.list({
+  is_insurance_type: true,
+});
+
+// Find a specific payment type by code
+const cashType = await sikka.paymentTypes.list({ code: '1' });
+```
+
+---
+
 ### Transactions
 
 Transactions represent both procedures (service line items) and payments.
@@ -276,7 +313,12 @@ import type {
   SikkaTransactionListParams,
   SikkaTransactionListResponse,
 
-  // Payments
+  // Payment Types
+  SikkaPaymentType,
+  SikkaPaymentTypeListParams,
+  SikkaPaymentTypeListResponse,
+
+  // Claim Payments
   SikkaClaimPaymentRequest,
   SikkaClaimPaymentResponse,
   SikkaPaymentMode,
