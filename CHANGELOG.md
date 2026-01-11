@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v1.1.0](https://github.com/fincura-ai/sikka-sdk-js/compare/79367f374c577a3f1a6511db999954d39e1f508f..v1.1.0) - 2026-01-11
+#### 🌟 Features
+- add GET payment_type endpoint (#2) - ([79367f3](https://github.com/fincura-ai/sikka-sdk-js/commit/79367f374c577a3f1a6511db999954d39e1f508f)) - [@louis-lamoureux](https://github.com/louis-lamoureux)
+#### 🧹 Miscellaneous Chores
+- **(deps-dev)** bump the minor-development-deps group with 3 updates (#1) - ([97a763e](https://github.com/fincura-ai/sikka-sdk-js/commit/97a763eb969654961e25acf18f835152c4a7b8e9)) - dependabot[bot]
+
+- - -
+
 ## [v1.0.0](https://github.com/fincura-ai/sikka-sdk-js/compare/dd99c03c1883052213d9419b6ad306de98551c27..v1.0.0) - 2026-01-08
 #### 🌟 Features
 - simplify client init - ([0211af4](https://github.com/fincura-ai/sikka-sdk-js/commit/0211af450c2bd22aeadf9cc3f708b88be5977483)) - louis-lamoureux
