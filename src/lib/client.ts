@@ -11,6 +11,9 @@ import {
   type SikkaPatient,
   type SikkaPatientListParams,
   type SikkaPatientListResponse,
+  type SikkaPaymentType,
+  type SikkaPaymentTypeListParams,
+  type SikkaPaymentTypeListResponse,
   type SikkaRequestKeyRequest,
   type SikkaRequestKeyResponse,
   type SikkaTransaction,
@@ -100,38 +103,9 @@ export class SikkaClient {
      * ```
      */
     list: async (params: SikkaClaimListParams): Promise<SikkaClaim[]> => {
-      const queryParams: Record<string, string> = {};
-      if (params.patient_id) {
-        queryParams.patient_id = params.patient_id;
-      }
-
-      if (params.claim_id) {
-        queryParams.claim_id = params.claim_id;
-      }
-
-      if (params.status) {
-        queryParams.status = params.status;
-      }
-
-      if (params.start_date) {
-        queryParams.start_date = params.start_date;
-      }
-
-      if (params.end_date) {
-        queryParams.end_date = params.end_date;
-      }
-
-      if (params.limit) {
-        queryParams.limit = String(params.limit);
-      }
-
-      if (params.offset) {
-        queryParams.offset = String(params.offset);
-      }
-
       const response = await this.get<SikkaClaimListResponse>(
         '/v4/claims',
-        queryParams,
+        params,
       );
       return response.items;
     },
@@ -156,34 +130,42 @@ export class SikkaClient {
      * ```
      */
     list: async (params: SikkaPatientListParams): Promise<SikkaPatient[]> => {
-      const queryParams: Record<string, string> = {};
-      if (params.firstname) {
-        queryParams.firstname = params.firstname;
-      }
-
-      if (params.lastname) {
-        queryParams.lastname = params.lastname;
-      }
-
-      if (params.birthdate) {
-        queryParams.birthdate = params.birthdate;
-      }
-
-      if (params.patient_id) {
-        queryParams.patient_id = params.patient_id;
-      }
-
-      if (params.limit) {
-        queryParams.limit = String(params.limit);
-      }
-
-      if (params.offset) {
-        queryParams.offset = String(params.offset);
-      }
-
       const response = await this.get<SikkaPatientListResponse>(
         '/v4/patients',
-        queryParams,
+        params,
+      );
+      return response.items;
+    },
+  };
+
+  /**
+   * Payment types management endpoints.
+   * Payment types represent the different methods a practice accepts for payments.
+   */
+  public readonly paymentTypes = {
+    /**
+     * List payment types for the practice.
+     *
+     * @param params - Optional filter and pagination parameters
+     * @returns List of payment types
+     *
+     * @example
+     * ```typescript
+     * // Get all payment types
+     * const types = await client.paymentTypes.list();
+     *
+     * // Get only insurance payment types
+     * const insuranceTypes = await client.paymentTypes.list({
+     *   is_insurance_type: true,
+     * });
+     * ```
+     */
+    list: async (
+      params: SikkaPaymentTypeListParams = {},
+    ): Promise<SikkaPaymentType[]> => {
+      const response = await this.get<SikkaPaymentTypeListResponse>(
+        '/v4/payment_types',
+        params,
       );
       return response.items;
     },
@@ -210,30 +192,9 @@ export class SikkaClient {
     list: async (
       params: SikkaTransactionListParams,
     ): Promise<SikkaTransaction[]> => {
-      const queryParams: Record<string, string> = {};
-      if (params.claim_sr_no) {
-        queryParams.claim_sr_no = params.claim_sr_no;
-      }
-
-      if (params.patient_id) {
-        queryParams.patient_id = params.patient_id;
-      }
-
-      if (params.transaction_type) {
-        queryParams.transaction_type = params.transaction_type;
-      }
-
-      if (params.limit) {
-        queryParams.limit = String(params.limit);
-      }
-
-      if (params.offset) {
-        queryParams.offset = String(params.offset);
-      }
-
       const response = await this.get<SikkaTransactionListResponse>(
         '/v4/transactions',
-        queryParams,
+        params,
       );
       return response.items;
     },
@@ -322,7 +283,7 @@ export class SikkaClient {
   /**
    * Make an authenticated GET request to the Sikka API.
    */
-  async get<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
+  async get<T>(endpoint: string, params?: Record<string, unknown>): Promise<T> {
     const log = getLogger();
 
     await this.ensureAuthenticated();
@@ -333,7 +294,9 @@ export class SikkaClient {
 
     if (params) {
       for (const [key, value] of Object.entries(params)) {
-        url.searchParams.set(key, value);
+        if (value !== null && value !== undefined) {
+          url.searchParams.set(key, String(value));
+        }
       }
     }
 

@@ -2,6 +2,7 @@ import { createSikkaClient, SikkaClient } from '../../src/lib/client.js';
 import {
   type SikkaClaimListResponse,
   type SikkaPatientListResponse,
+  type SikkaPaymentTypeListResponse,
   type SikkaRequestKeyResponse,
   type SikkaTransactionListResponse,
 } from '../../src/lib/types.js';
@@ -385,6 +386,61 @@ describe('SikkaClient', () => {
       expect(patients).toHaveLength(1);
       expect(patients[0].firstname).toBe('John');
       expect(patients[0].lastname).toBe('Doe');
+    });
+  });
+
+  describe('paymentTypes.list', () => {
+    beforeEach(async () => {
+      const mockResponse = createRequestKeyResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(mockResponse),
+        ok: true,
+      });
+      await client.authenticate();
+    });
+
+    it('should return array of payment types', async () => {
+      const paymentTypesResponse: SikkaPaymentTypeListResponse = {
+        execution_time: '0.1s',
+        items: [
+          {
+            code: '1',
+            description: 'Cash Payment',
+            href: 'https://api.sikkasoft.com/v4/practices/1/payment_types/1',
+            practice_href: 'https://api.sikkasoft.com/v4/practices/1',
+            practice_id: '1',
+          },
+          {
+            code: '2',
+            description: 'Insurance Payment',
+            href: 'https://api.sikkasoft.com/v4/practices/1/payment_types/2',
+            practice_href: 'https://api.sikkasoft.com/v4/practices/1',
+            practice_id: '1',
+          },
+        ],
+        limit: '500',
+        offset: '0',
+        pagination: {
+          current: '1',
+          first: '1',
+          last: '1',
+          next: '',
+          previous: '',
+        },
+        total_count: '2',
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(paymentTypesResponse)),
+      });
+
+      const types = await client.paymentTypes.list();
+
+      expect(types).toHaveLength(2);
+      expect(types[0].code).toBe('1');
+      expect(types[0].description).toBe('Cash Payment');
+      expect(types[1].code).toBe('2');
+      expect(types[1].description).toBe('Insurance Payment');
     });
   });
 
