@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v1.1.1](https://github.com/fincura-ai/sikka-sdk-js/compare/b5021ac5e2de78132cac86f737e86d5c9550d179..v1.1.1) - 2026-02-03
+#### 🐛 Bug Fixes
+- missing type property (#5) - ([b5021ac](https://github.com/fincura-ai/sikka-sdk-js/commit/b5021ac5e2de78132cac86f737e86d5c9550d179)) - [@louis-lamoureux](https://github.com/louis-lamoureux)
+
+- - -
+
 ## [v1.1.0](https://github.com/fincura-ai/sikka-sdk-js/compare/79367f374c577a3f1a6511db999954d39e1f508f..v1.1.0) - 2026-01-11
 #### 🌟 Features
 - add GET payment_type endpoint (#2) - ([79367f3](https://github.com/fincura-ai/sikka-sdk-js/commit/79367f374c577a3f1a6511db999954d39e1f508f)) - [@louis-lamoureux](https://github.com/louis-lamoureux)
