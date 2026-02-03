@@ -346,6 +346,7 @@ export type SikkaPaymentMode = 'Cash' | 'Check' | 'EFT';
  * Uses pipe-delimited values for line item amounts.
  */
 export type SikkaClaimPaymentRequest = {
+  adjustment_type: string;
   cheque_no: string;
   claim_payment_date: string;
   claim_sr_no: string;
