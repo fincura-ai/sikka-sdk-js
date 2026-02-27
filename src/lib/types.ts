@@ -343,20 +343,173 @@ export type SikkaPaymentMode = 'Cash' | 'Check' | 'EFT';
 
 /**
  * Request body for posting a claim payment.
- * Uses pipe-delimited values for line item amounts.
+ * Uses pipe-delimited values for line item amounts when is_payment_by_procedure_code=true.
  */
 export type SikkaClaimPaymentRequest = {
-  adjustment_type: string;
-  cheque_no: string;
-  claim_payment_date: string;
+  /**
+   * The generic ID of the claim for which you want to post the payment.
+   */
   claim_sr_no: string;
-  is_payment_by_procedure_code: 'false' | 'true';
-  note: string;
-  payment_amount: string;
-  payment_mode: SikkaPaymentMode;
+
+  /**
+   * The unique identifier for the practice.
+   */
   practice_id: string;
-  transaction_sr_no: string;
+
+  /**
+   * The total payment amount (format: xx.xx).
+   * If is_payment_by_procedure_code=true, use pipe-delimited values (e.g., "100.00|50.00").
+   */
+  payment_amount: string;
+
+  /**
+   * Boolean flag indicating if the payment is allocated by procedure code.
+   * For Tracker, value should be true only as PMS does not support without procedure code.
+   */
+  is_payment_by_procedure_code: 'false' | 'true';
+
+  /**
+   * The date of the payment (format: yyyy-MM-dd).
+   */
+  claim_payment_date: string;
+
+  /**
+   * The method of payment.
+   * Get valid modes from payment_types API with is_insurance_type=true.
+   */
+  payment_mode: SikkaPaymentMode;
+
+  /**
+   * The deductible amount (format: xx.xx). Pass "0" if no amount.
+   * PMS-specific formats:
+   * - Dentrix Enterprise/G6: pipe-delimited "standard|preventive|others" (e.g., "0|0|0")
+   * - Dentrix Ascend: pipe-delimited "major|preventive|basic|ortho" (e.g., "0|0|0|0")
+   * - Tracker: Not supported
+   */
+  deductible: string;
+
+  /**
+   * The write-off amount (format: xx.xx). Pass "0" if no amount.
+   * If is_payment_by_procedure_code=true, use pipe-delimited values.
+   * - Dentrix Ascend: write_off not allowed for is_payment_by_procedure_code=false, pass "0"
+   * - Tracker: Not supported
+   */
   write_off: string;
+
+  /**
+   * The specific transaction ID(s) associated with the payment.
+   * Required only if is_payment_by_procedure_code=true.
+   * For multiple procedures, use pipe-delimited values (e.g., "123|124|125").
+   */
+  transaction_sr_no?: string;
+
+  /**
+   * Payment notes/remarks.
+   * Should not contain special characters (<, >, &, ,).
+   */
+  note?: string;
+
+  /**
+   * The credit adjustment type ID.
+   * Get from payment_types API with is_adjustment_type=true.
+   * Supported only for Dentrix Enterprise, Dentrix Ascend, and Dentrix G6+.
+   * Required if write_off value is negative in Dentrix Enterprise/Ascend.
+   */
+  adjustment_type?: string;
+
+  /**
+   * The provider ID for the credit adjustment.
+   * Supported only for Dentrix G6+.
+   * Must match count of write_off values (pipe-delimited).
+   */
+  credit_adjustment_provider?: string;
+
+  /**
+   * Boolean to trigger a debit adjustment write-back.
+   * Not supported for Tracker.
+   */
+  is_debit_adjustment_writeback?: 'false' | 'true';
+
+  /**
+   * The amount for the debit adjustment (format: xx.xx).
+   * Required only if performing debit adjustment write-back.
+   * Must be positive (Dentrix G6+ allows 0).
+   */
+  debit_adjustment_amount?: string;
+
+  /**
+   * Date of the debit adjustment (format: yyyy-MM-dd).
+   * Required for Open Dental PMS if performing debit adjustment write-back.
+   * Not supported for Dentrix Ascend.
+   */
+  debit_adjustment_date?: string;
+
+  /**
+   * The debit adjustment type ID.
+   * Get from payment_types API with is_debit_adjustment_type=true.
+   * Required for Open Dental and Dentrix Ascend if performing debit adjustment write-back.
+   */
+  debit_adjustment_type?: string;
+
+  /**
+   * Notes for the debit adjustment.
+   * Must not contain special characters (<, >, &, ,).
+   * Not supported for Dentrix Ascend.
+   */
+  debit_adjustment_note?: string;
+
+  /**
+   * Boolean for procedure-level debit adjustments.
+   * Supported for Open Dental only.
+   * If true, debit_adjustment_amount, debit_adjustment_transaction_sr_no,
+   * debit_adjustment_provider, and debit_adjustment_type must have matching counts (pipe-delimited).
+   */
+  is_debit_adjustment_by_procedure?: 'false' | 'true';
+
+  /**
+   * Transaction ID(s) for the debit adjustment.
+   * Required if is_debit_adjustment_by_procedure=true.
+   * Supported for Open Dental only.
+   */
+  debit_adjustment_transaction_sr_no?: string;
+
+  /**
+   * The provider ID for the debit adjustment.
+   * Required for Open Dental if performing debit adjustment write-back.
+   * For Dentrix G6+, must match count of debit_adjustment_amount (pipe-delimited).
+   */
+  debit_adjustment_provider?: string;
+
+  /**
+   * The cheque number.
+   * Mandatory if payment mode is Cheque for Tracker.
+   */
+  cheque_no?: string;
+
+  /**
+   * The bank number.
+   */
+  bank_no?: string;
+
+  /**
+   * The name of the bank.
+   * Mandatory for Tracker.
+   * Get using writeback_details API with category=bank name and writeback_type=claim_payment.
+   */
+  bank_name?: string;
+
+  /**
+   * The direct deposit reference number.
+   * Mandatory if payment mode is Direct Deposit for Tracker.
+   */
+  direct_deposit_number?: string;
+
+  /**
+   * The provider ID.
+   * Get using providers API.
+   * Supported only for Tracker and Dentrix PMS.
+   */
+  provider_id?: string;
 };
 
 /**

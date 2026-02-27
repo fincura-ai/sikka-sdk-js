@@ -62,11 +62,11 @@ export class SikkaClient {
      *   practice_id: 'practice-id',
      *   payment_amount: '100.00|50.00', // Pipe-delimited for multiple line items
      *   transaction_sr_no: '789|790',   // Corresponding transaction IDs
+     *   deductible: '0.00|0.00',        // Required, use pipe-delimited if by procedure
      *   write_off: '0.00|0.00',
      *   claim_payment_date: '2024-01-15',
      *   payment_mode: 'EFT',
-     *   cheque_no: 'CHK123',
-     *   is_payment_by_procedure_code: 'false',
+     *   is_payment_by_procedure_code: 'true',
      *   note: 'Insurance payment',
      * });
      * ```
