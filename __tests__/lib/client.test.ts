@@ -1,6 +1,8 @@
 import { createSikkaClient, SikkaClient } from '../../src/lib/client.js';
 import {
   type SikkaClaimListResponse,
+  type SikkaClaimPaymentRequest,
+  type SikkaClaimPaymentResponse,
   type SikkaPatientListResponse,
   type SikkaPaymentTypeListResponse,
   type SikkaRequestKeyResponse,
@@ -303,6 +305,158 @@ describe('SikkaClient', () => {
       const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
       expect(lastCall[1].body).toBe(JSON.stringify(body));
       expect(lastCall[1].headers['Content-Type']).toBe('application/json');
+    });
+  });
+
+  describe('claimPayment.post', () => {
+    beforeEach(async () => {
+      const mockResponse = createRequestKeyResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(mockResponse),
+        ok: true,
+      });
+      await client.authenticate();
+    });
+
+    it('should post a claim payment with required fields', async () => {
+      const paymentResponse: SikkaClaimPaymentResponse = {
+        claim_sr_no: '123456',
+        message: 'Payment posted successfully',
+        status: 'success',
+      };
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(paymentResponse),
+        ok: true,
+      });
+
+      const request: SikkaClaimPaymentRequest = {
+        claim_payment_date: '2024-01-15',
+        claim_sr_no: '123456',
+        deductible: '0',
+        is_payment_by_procedure_code: 'false',
+        payment_amount: '100.00',
+        payment_mode: 'EFT',
+        practice_id: 'practice-1',
+        write_off: '0',
+      };
+
+      const result = await client.claimPayment.post(request);
+
+      expect(result).toEqual(paymentResponse);
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      expect(lastCall[0]).toContain('/v4/claim_payment');
+      expect(lastCall[1].body).toBe(JSON.stringify(request));
+    });
+
+    it('should post a claim payment with procedure-level allocation', async () => {
+      const paymentResponse: SikkaClaimPaymentResponse = {
+        claim_sr_no: '123456',
+        message: 'Payment posted successfully',
+        status: 'success',
+      };
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(paymentResponse),
+        ok: true,
+      });
+
+      const request: SikkaClaimPaymentRequest = {
+        cheque_no: 'CHK12345',
+        claim_payment_date: '2024-01-15',
+        claim_sr_no: '123456',
+        deductible: '10.00|5.00|0.00',
+        is_payment_by_procedure_code: 'true',
+        note: 'Insurance payment for procedures',
+        payment_amount: '50.00|30.00|20.00',
+        payment_mode: 'Check',
+        practice_id: 'practice-1',
+        transaction_sr_no: '789|790|791',
+        write_off: '5.00|2.50|0.00',
+      };
+
+      const result = await client.claimPayment.post(request);
+
+      expect(result).toEqual(paymentResponse);
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      expect(JSON.parse(lastCall[1].body)).toMatchObject({
+        is_payment_by_procedure_code: 'true',
+        payment_amount: '50.00|30.00|20.00',
+        transaction_sr_no: '789|790|791',
+      });
+    });
+
+    it('should post a claim payment with debit adjustment fields', async () => {
+      const paymentResponse: SikkaClaimPaymentResponse = {
+        claim_sr_no: '123456',
+        message: 'Payment posted successfully',
+        status: 'success',
+      };
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(paymentResponse),
+        ok: true,
+      });
+
+      const request: SikkaClaimPaymentRequest = {
+        claim_payment_date: '2024-01-15',
+        claim_sr_no: '123456',
+        debit_adjustment_amount: '25.00',
+        debit_adjustment_date: '2024-01-15',
+        debit_adjustment_note: 'Adjustment for overpayment',
+        debit_adjustment_provider: 'PROV001',
+        debit_adjustment_type: 'ADJ001',
+        deductible: '0',
+        is_debit_adjustment_writeback: 'true',
+        is_payment_by_procedure_code: 'false',
+        payment_amount: '100.00',
+        payment_mode: 'EFT',
+        practice_id: 'practice-1',
+        write_off: '0',
+      };
+
+      const result = await client.claimPayment.post(request);
+
+      expect(result).toEqual(paymentResponse);
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const sentBody = JSON.parse(lastCall[1].body);
+      expect(sentBody.is_debit_adjustment_writeback).toBe('true');
+      expect(sentBody.debit_adjustment_amount).toBe('25.00');
+      expect(sentBody.debit_adjustment_provider).toBe('PROV001');
+    });
+
+    it('should include optional bank and provider fields', async () => {
+      const paymentResponse: SikkaClaimPaymentResponse = {
+        claim_sr_no: '123456',
+        message: 'Payment posted successfully',
+        status: 'success',
+      };
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(paymentResponse),
+        ok: true,
+      });
+
+      const request: SikkaClaimPaymentRequest = {
+        bank_name: 'First National Bank',
+        bank_no: 'BNK123',
+        claim_payment_date: '2024-01-15',
+        claim_sr_no: '123456',
+        deductible: '0',
+        direct_deposit_number: 'DD98765',
+        is_payment_by_procedure_code: 'false',
+        payment_amount: '100.00',
+        payment_mode: 'EFT',
+        practice_id: 'practice-1',
+        provider_id: 'PROV001',
+        write_off: '0',
+      };
+
+      const result = await client.claimPayment.post(request);
+
+      expect(result).toEqual(paymentResponse);
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const sentBody = JSON.parse(lastCall[1].body);
+      expect(sentBody.bank_no).toBe('BNK123');
+      expect(sentBody.bank_name).toBe('First National Bank');
+      expect(sentBody.direct_deposit_number).toBe('DD98765');
+      expect(sentBody.provider_id).toBe('PROV001');
     });
   });
 
