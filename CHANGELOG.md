@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v1.3.0](https://github.com/fincura-ai/sikka-sdk-js/compare/7a699f9cc3b6e70c2d94695578c10d60bf3c72e5..v1.3.0) - 2026-03-04
+#### 🌟 Features
+- use real response payload (#7) - ([7a699f9](https://github.com/fincura-ai/sikka-sdk-js/commit/7a699f9cc3b6e70c2d94695578c10d60bf3c72e5)) - [@louis-lamoureux](https://github.com/louis-lamoureux)
+
+- - -
+
 ## [v1.2.0](https://github.com/fincura-ai/sikka-sdk-js/compare/c95b6713fa7f70509947b417592e5e2f5a2379ce..v1.2.0) - 2026-03-02
 #### 🌟 Features
 - improve payment posting api (#6) - ([c95b671](https://github.com/fincura-ai/sikka-sdk-js/commit/c95b6713fa7f70509947b417592e5e2f5a2379ce)) - [@louis-lamoureux](https://github.com/louis-lamoureux)
