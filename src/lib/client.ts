@@ -6,6 +6,7 @@ import {
   type SikkaClaimListResponse,
   type SikkaClaimPaymentRequest,
   type SikkaClaimPaymentResponse,
+  type SikkaClaimPaymentResult,
   type SikkaClientConfig,
   type SikkaClientCredentials,
   type SikkaPatient,
@@ -19,9 +20,26 @@ import {
   type SikkaTransaction,
   type SikkaTransactionListParams,
   type SikkaTransactionListResponse,
+  type SikkaWritebackStatusItem,
+  type SikkaWritebackStatusResponse,
 } from './types.js';
 
 const SIKKA_BASE_URL = 'https://api.sikkasoft.com';
+
+const WRITEBACK_ID_PATTERN = /^Id:(\d+)$/u;
+
+/**
+ * Extract the numeric writeback tracking ID from the long_message field.
+ * Expected format: "Id:3809955"
+ */
+const parseWritebackId = (longMessage: string | undefined): string | null => {
+  if (!longMessage) {
+    return null;
+  }
+
+  const match = WRITEBACK_ID_PATTERN.exec(longMessage);
+  return match?.[1] ?? null;
+};
 
 /**
  * Sikka API Client
@@ -52,33 +70,42 @@ export class SikkaClient {
     /**
      * Post a payment to a claim.
      *
+     * The Sikka API accepts the request (201) but the actual PMS writeback
+     * is asynchronous. The returned `writeback_id` can be used with
+     * `writebackStatus.get()` to poll for completion.
+     *
      * @param request - Payment details
-     * @returns Payment response
+     * @returns Payment response with parsed writeback tracking ID
      *
      * @example
      * ```typescript
      * const result = await client.claimPayment.post({
      *   claim_sr_no: '123456',
      *   practice_id: 'practice-id',
-     *   payment_amount: '100.00|50.00', // Pipe-delimited for multiple line items
-     *   transaction_sr_no: '789|790',   // Corresponding transaction IDs
-     *   deductible: '0.00|0.00',        // Required, use pipe-delimited if by procedure
+     *   payment_amount: '100.00|50.00',
+     *   transaction_sr_no: '789|790',
+     *   deductible: '0.00|0.00',
      *   write_off: '0.00|0.00',
      *   claim_payment_date: '2024-01-15',
      *   payment_mode: 'EFT',
      *   is_payment_by_procedure_code: 'true',
      *   note: 'Insurance payment',
      * });
+     *
+     * if (result.writeback_id) {
+     *   const status = await client.writebackStatus.get(result.writeback_id);
+     * }
      * ```
      */
     post: async (
       request: SikkaClaimPaymentRequest,
-    ): Promise<SikkaClaimPaymentResponse> => {
+    ): Promise<SikkaClaimPaymentResult> => {
       const response = await this.post<SikkaClaimPaymentResponse>(
         '/v4/claim_payment',
         request as unknown as Record<string, unknown>,
       );
-      return response;
+      const writebackId = parseWritebackId(response.long_message);
+      return { ...response, writeback_id: writebackId };
     },
   };
 
@@ -210,6 +237,41 @@ export class SikkaClient {
         claim_sr_no: claimSrNo,
       });
       return transactions.filter((txn) => txn.transaction_type === 'Procedure');
+    },
+  };
+
+  /**
+   * Writeback status endpoints.
+   * Used to poll for the result of asynchronous PMS writeback operations
+   * (e.g., after posting a claim payment).
+   */
+  public readonly writebackStatus = {
+    /**
+     * Get the status of a writeback operation.
+     *
+     * @param id - The writeback tracking ID (returned from claimPayment.post as writeback_id)
+     * @returns The writeback status record
+     *
+     * @example
+     * ```typescript
+     * const result = await client.claimPayment.post({ ... });
+     * if (result.writeback_id) {
+     *   const status = await client.writebackStatus.get(result.writeback_id);
+     *   console.log(status.status, status.is_completed);
+     * }
+     * ```
+     */
+    get: async (id: string): Promise<SikkaWritebackStatusItem> => {
+      const response = await this.get<SikkaWritebackStatusResponse>(
+        '/v4/writeback_status',
+        { id },
+      );
+      const item = response.items[0];
+      if (!item) {
+        throw new Error(`No writeback status found for id: ${id}`);
+      }
+
+      return item;
     },
   };
 

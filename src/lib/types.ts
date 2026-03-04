@@ -513,12 +513,50 @@ export type SikkaClaimPaymentRequest = {
 };
 
 /**
- * Response from posting a claim payment
+ * Raw API response from posting a claim payment.
+ * The Sikka API returns a 201 with writeback tracking fields rather than
+ * the final PMS result, since the actual writeback is asynchronous.
  */
 export type SikkaClaimPaymentResponse = {
-  claim_sr_no: string;
-  message: string;
+  error_code: string;
+  http_code: string;
+  http_code_desc: string;
+  long_message: string;
+  more_information: string;
+  short_message: string;
+};
+
+/**
+ * Enriched result from claimPayment.post() that includes
+ * the parsed writeback tracking ID extracted from long_message.
+ */
+export type SikkaClaimPaymentResult = SikkaClaimPaymentResponse & {
+  writeback_id: string | null;
+};
+
+// -----------------------------------------------------------------------------
+// Writeback Status Types
+
+/**
+ * A single writeback status record returned by the writeback_status endpoint.
+ * Represents the state of an asynchronous PMS writeback operation.
+ */
+export type SikkaWritebackStatusItem = {
+  completed_time: string;
+  current_status: string;
+  has_error: string;
+  id: string;
+  is_completed: string;
+  request_time: string;
+  result: string;
   status: string;
+};
+
+/**
+ * Response from GET /v4/writeback_status
+ */
+export type SikkaWritebackStatusResponse = {
+  items: SikkaWritebackStatusItem[];
 };
 
 // -----------------------------------------------------------------------------
