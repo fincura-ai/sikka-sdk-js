@@ -7,6 +7,7 @@ import {
   type SikkaPaymentTypeListResponse,
   type SikkaRequestKeyResponse,
   type SikkaTransactionListResponse,
+  type SikkaWritebackStatusResponse,
 } from '../../src/lib/types.js';
 
 jest.mock('../../src/lib/logger', () => ({
@@ -287,9 +288,13 @@ describe('SikkaClient', () => {
 
     it('should send JSON body with request key', async () => {
       const paymentResponse = {
-        claim_sr_no: '123',
-        message: 'Payment posted successfully',
-        status: 'success',
+        error_code: 'API2016',
+        http_code: '201',
+        http_code_desc: 'Created',
+        long_message: 'Id:123',
+        more_information:
+          'https://api.sikkasoft.com/v4/writeback_status?id=123',
+        short_message: 'New resource created successfully',
       };
       mockFetch.mockResolvedValueOnce({
         json: () => Promise.resolve(paymentResponse),
@@ -309,6 +314,17 @@ describe('SikkaClient', () => {
   });
 
   describe('claimPayment.post', () => {
+    const createClaimPaymentResponse = (
+      writebackId = '3809955',
+    ): SikkaClaimPaymentResponse => ({
+      error_code: 'API2016',
+      http_code: '201',
+      http_code_desc: 'Created',
+      long_message: `Id:${writebackId}`,
+      more_information: `https://api.sikkasoft.com/v4/writeback_status?id=${writebackId}`,
+      short_message: 'New resource created successfully',
+    });
+
     beforeEach(async () => {
       const mockResponse = createRequestKeyResponse();
       mockFetch.mockResolvedValueOnce({
@@ -319,11 +335,7 @@ describe('SikkaClient', () => {
     });
 
     it('should post a claim payment with required fields', async () => {
-      const paymentResponse: SikkaClaimPaymentResponse = {
-        claim_sr_no: '123456',
-        message: 'Payment posted successfully',
-        status: 'success',
-      };
+      const paymentResponse = createClaimPaymentResponse();
       mockFetch.mockResolvedValueOnce({
         json: () => Promise.resolve(paymentResponse),
         ok: true,
@@ -342,18 +354,69 @@ describe('SikkaClient', () => {
 
       const result = await client.claimPayment.post(request);
 
-      expect(result).toEqual(paymentResponse);
+      expect(result).toMatchObject(paymentResponse);
+      expect(result.writeback_id).toBe('3809955');
       const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
       expect(lastCall[0]).toContain('/v4/claim_payment');
       expect(lastCall[1].body).toBe(JSON.stringify(request));
     });
 
-    it('should post a claim payment with procedure-level allocation', async () => {
-      const paymentResponse: SikkaClaimPaymentResponse = {
+    it('should parse writeback_id from long_message', async () => {
+      const paymentResponse = createClaimPaymentResponse('9999');
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(paymentResponse),
+        ok: true,
+      });
+
+      const request: SikkaClaimPaymentRequest = {
+        claim_payment_date: '2024-01-15',
         claim_sr_no: '123456',
-        message: 'Payment posted successfully',
-        status: 'success',
+        deductible: '0',
+        is_payment_by_procedure_code: 'false',
+        payment_amount: '50.00',
+        payment_mode: 'Cash',
+        practice_id: 'practice-1',
+        write_off: '0',
       };
+
+      const result = await client.claimPayment.post(request);
+
+      expect(result.writeback_id).toBe('9999');
+      expect(result.long_message).toBe('Id:9999');
+    });
+
+    it('should return null writeback_id when long_message has unexpected format', async () => {
+      const paymentResponse: SikkaClaimPaymentResponse = {
+        error_code: 'API2016',
+        http_code: '201',
+        http_code_desc: 'Created',
+        long_message: 'Some unexpected message',
+        more_information: '',
+        short_message: 'New resource created successfully',
+      };
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(paymentResponse),
+        ok: true,
+      });
+
+      const request: SikkaClaimPaymentRequest = {
+        claim_payment_date: '2024-01-15',
+        claim_sr_no: '123456',
+        deductible: '0',
+        is_payment_by_procedure_code: 'false',
+        payment_amount: '50.00',
+        payment_mode: 'Cash',
+        practice_id: 'practice-1',
+        write_off: '0',
+      };
+
+      const result = await client.claimPayment.post(request);
+
+      expect(result.writeback_id).toBeNull();
+    });
+
+    it('should post a claim payment with procedure-level allocation', async () => {
+      const paymentResponse = createClaimPaymentResponse();
       mockFetch.mockResolvedValueOnce({
         json: () => Promise.resolve(paymentResponse),
         ok: true,
@@ -375,7 +438,8 @@ describe('SikkaClient', () => {
 
       const result = await client.claimPayment.post(request);
 
-      expect(result).toEqual(paymentResponse);
+      expect(result).toMatchObject(paymentResponse);
+      expect(result.writeback_id).toBe('3809955');
       const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
       expect(JSON.parse(lastCall[1].body)).toMatchObject({
         is_payment_by_procedure_code: 'true',
@@ -385,11 +449,7 @@ describe('SikkaClient', () => {
     });
 
     it('should post a claim payment with debit adjustment fields', async () => {
-      const paymentResponse: SikkaClaimPaymentResponse = {
-        claim_sr_no: '123456',
-        message: 'Payment posted successfully',
-        status: 'success',
-      };
+      const paymentResponse = createClaimPaymentResponse();
       mockFetch.mockResolvedValueOnce({
         json: () => Promise.resolve(paymentResponse),
         ok: true,
@@ -414,7 +474,7 @@ describe('SikkaClient', () => {
 
       const result = await client.claimPayment.post(request);
 
-      expect(result).toEqual(paymentResponse);
+      expect(result).toMatchObject(paymentResponse);
       const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
       const sentBody = JSON.parse(lastCall[1].body);
       expect(sentBody.is_debit_adjustment_writeback).toBe('true');
@@ -423,11 +483,7 @@ describe('SikkaClient', () => {
     });
 
     it('should include optional bank and provider fields', async () => {
-      const paymentResponse: SikkaClaimPaymentResponse = {
-        claim_sr_no: '123456',
-        message: 'Payment posted successfully',
-        status: 'success',
-      };
+      const paymentResponse = createClaimPaymentResponse();
       mockFetch.mockResolvedValueOnce({
         json: () => Promise.resolve(paymentResponse),
         ok: true,
@@ -450,13 +506,99 @@ describe('SikkaClient', () => {
 
       const result = await client.claimPayment.post(request);
 
-      expect(result).toEqual(paymentResponse);
+      expect(result).toMatchObject(paymentResponse);
       const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
       const sentBody = JSON.parse(lastCall[1].body);
       expect(sentBody.bank_no).toBe('BNK123');
       expect(sentBody.bank_name).toBe('First National Bank');
       expect(sentBody.direct_deposit_number).toBe('DD98765');
       expect(sentBody.provider_id).toBe('PROV001');
+    });
+  });
+
+  describe('writebackStatus.get', () => {
+    beforeEach(async () => {
+      const mockResponse = createRequestKeyResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(mockResponse),
+        ok: true,
+      });
+      await client.authenticate();
+    });
+
+    it('should return the writeback status item for the given id', async () => {
+      const statusResponse: SikkaWritebackStatusResponse = {
+        items: [
+          {
+            completed_time: '',
+            current_status: '2026-03-04 16:52:39 : Writeback request received',
+            has_error: '',
+            id: '3809955',
+            is_completed: '',
+            request_time: '2026-03-04T16:52:15',
+            result: '',
+            status: 'Pending',
+          },
+        ],
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(statusResponse)),
+      });
+
+      const status = await client.writebackStatus.get('3809955');
+
+      expect(status.id).toBe('3809955');
+      expect(status.status).toBe('Pending');
+      expect(status.is_completed).toBe('');
+      expect(status.has_error).toBe('');
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const url = new URL(lastCall[0]);
+      expect(url.pathname).toBe('/v4/writeback_status');
+      expect(url.searchParams.get('id')).toBe('3809955');
+    });
+
+    it('should return a completed writeback status', async () => {
+      const statusResponse: SikkaWritebackStatusResponse = {
+        items: [
+          {
+            completed_time: '2026-03-04T16:53:00',
+            current_status: '2026-03-04 16:53:00 : Payment posted successfully',
+            has_error: 'false',
+            id: '3809955',
+            is_completed: 'true',
+            request_time: '2026-03-04T16:52:15',
+            result: 'Success',
+            status: 'Completed',
+          },
+        ],
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(statusResponse)),
+      });
+
+      const status = await client.writebackStatus.get('3809955');
+
+      expect(status.status).toBe('Completed');
+      expect(status.is_completed).toBe('true');
+      expect(status.has_error).toBe('false');
+      expect(status.result).toBe('Success');
+    });
+
+    it('should throw when no writeback status found', async () => {
+      const statusResponse: SikkaWritebackStatusResponse = {
+        items: [],
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(statusResponse)),
+      });
+
+      await expect(client.writebackStatus.get('9999999')).rejects.toThrow(
+        'No writeback status found for id: 9999999',
+      );
     });
   });
 
