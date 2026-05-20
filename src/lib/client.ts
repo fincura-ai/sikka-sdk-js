@@ -18,6 +18,9 @@ import {
   type SikkaPaymentType,
   type SikkaPaymentTypeListParams,
   type SikkaPaymentTypeListResponse,
+  type SikkaPracticeVariable,
+  type SikkaPracticeVariableListParams,
+  type SikkaPracticeVariableListResponse,
   type SikkaRequestKeyRequest,
   type SikkaRequestKeyResponse,
   type SikkaTransaction,
@@ -233,6 +236,40 @@ export class SikkaClient {
     ): Promise<SikkaPaymentType[]> => {
       const response = await this.get<SikkaPaymentTypeListResponse>(
         '/v4/payment_types',
+        params,
+      );
+      return response.items;
+    },
+  };
+
+  /**
+   * Practice variables endpoints.
+   * Returns configurable values from the practice management system such as
+   * appointment statuses, claim statuses, and patient statuses.
+   */
+  public readonly practiceVariables = {
+    /**
+     * List practice variables, optionally filtered by service name.
+     *
+     * @param params - Optional filter and pagination parameters
+     * @returns List of practice variables
+     *
+     * @example
+     * ```typescript
+     * // Get all claim statuses
+     * const claimStatuses = await client.practiceVariables.list({
+     *   service_name: 'Claim Status',
+     * });
+     *
+     * // Use the value field for claims.update()
+     * const validStatuses = claimStatuses.map(v => v.value);
+     * ```
+     */
+    list: async (
+      params: SikkaPracticeVariableListParams = {},
+    ): Promise<SikkaPracticeVariable[]> => {
+      const response = await this.get<SikkaPracticeVariableListResponse>(
+        '/v4/practice_variables',
         params,
       );
       return response.items;
