@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v1.5.0](https://github.com/fincura-ai/sikka-sdk-js/compare/0ed3557a4a1dabf8171ac4099a49baf1acb57ad9..v1.5.0) - 2026-05-20
+#### 🌟 Features
+- add practice variables (#10) - ([0ed3557](https://github.com/fincura-ai/sikka-sdk-js/commit/0ed3557a4a1dabf8171ac4099a49baf1acb57ad9)) - [@louis-lamoureux](https://github.com/louis-lamoureux)
+
+- - -
+
 ## [v1.4.0](https://github.com/fincura-ai/sikka-sdk-js/compare/672c1251e6a8937383074eaa987699a730a47728..v1.4.0) - 2026-05-20
 #### 🌟 Features
 - add PATCH claims endpoint for updating claim status and notes (#9) - ([672c125](https://github.com/fincura-ai/sikka-sdk-js/commit/672c1251e6a8937383074eaa987699a730a47728)) - [@louis-lamoureux](https://github.com/louis-lamoureux)
