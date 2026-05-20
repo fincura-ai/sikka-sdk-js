@@ -7,6 +7,9 @@ import {
   type SikkaClaimPaymentRequest,
   type SikkaClaimPaymentResponse,
   type SikkaClaimPaymentResult,
+  type SikkaClaimUpdateRequest,
+  type SikkaClaimUpdateResponse,
+  type SikkaClaimUpdateResult,
   type SikkaClientConfig,
   type SikkaClientCredentials,
   type SikkaPatient,
@@ -135,6 +138,44 @@ export class SikkaClient {
         params,
       );
       return response.items;
+    },
+
+    /**
+     * Update a claim's status and/or note.
+     *
+     * The Sikka API accepts the request but the actual PMS writeback
+     * is asynchronous. The returned `writeback_id` can be used with
+     * `writebackStatus.get()` to poll for completion.
+     *
+     * At least one of `status` or `note` must be provided.
+     *
+     * @param request - Claim update details including claim_sr_no
+     * @returns Update response with parsed writeback tracking ID
+     *
+     * @example
+     * ```typescript
+     * const result = await client.claims.update({
+     *   claim_sr_no: '123456',
+     *   practice_id: 'practice-id',
+     *   status: 'Received',
+     *   note: 'Claim received and under review',
+     * });
+     *
+     * if (result.writeback_id) {
+     *   const status = await client.writebackStatus.get(result.writeback_id);
+     * }
+     * ```
+     */
+    update: async (
+      request: SikkaClaimUpdateRequest,
+    ): Promise<SikkaClaimUpdateResult> => {
+      const { claim_sr_no: claimSrNo, ...body } = request;
+      const response = await this.patch<SikkaClaimUpdateResponse>(
+        `/v4/claims/${claimSrNo}`,
+        body as unknown as Record<string, unknown>,
+      );
+      const writebackId = parseWritebackId(response.long_message);
+      return { ...response, writeback_id: writebackId };
     },
   };
 
@@ -416,6 +457,46 @@ export class SikkaClient {
     }
 
     return this.requestKeyExpiresAt > new Date();
+  }
+
+  /**
+   * Make an authenticated PATCH request to the Sikka API.
+   */
+  async patch<T>(endpoint: string, body: Record<string, unknown>): Promise<T> {
+    const log = getLogger();
+
+    await this.ensureAuthenticated();
+
+    const requestKey = this.getRequestKey();
+    const url = new URL(`${this.baseUrl}${endpoint}`);
+    url.searchParams.set('request_key', requestKey);
+
+    log.debug('Sikka API PATCH request', { body, endpoint });
+
+    const response = await fetch(url.toString(), {
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        'Request-Key': requestKey,
+      },
+      method: 'PATCH',
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(
+        `Sikka API PATCH ${endpoint} failed: ${response.status} ${response.statusText} - ${errorBody}`,
+      );
+    }
+
+    const data = (await response.json()) as T;
+
+    log.debug('Sikka API PATCH response', {
+      endpoint,
+      status: response.status,
+    });
+
+    return data;
   }
 
   /**

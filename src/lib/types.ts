@@ -271,6 +271,89 @@ export type SikkaClaimListParams = {
  */
 export type SikkaClaimListResponse = SikkaPaginatedResponse<SikkaClaim>;
 
+/**
+ * Request body for updating a claim's status and/or note.
+ * Must contain at least one of `status` or `note`.
+ */
+export type SikkaClaimUpdateRequest = {
+  /**
+   * The generic ID of the claim to update.
+   * Used as a URL path parameter: PATCH /v4/claims/{claim_sr_no}
+   */
+  claim_sr_no: string;
+
+  /**
+   * The unique identifier for the practice.
+   * Retrieve this using the Practices API.
+   */
+  practice_id: string;
+
+  /**
+   * Claim status. Only values accepted by the practice management software are valid.
+   * Get valid statuses from the practice_variables API where service_name='Claim Status'.
+   */
+  status?: string;
+
+  /**
+   * Claim note. At least one of `status` or `note` must be provided.
+   */
+  note?: string;
+
+  /**
+   * Internal note for the claim.
+   */
+  internal_note?: string;
+
+  /**
+   * Date the claim was sent (format: yyyy-mm-dd).
+   */
+  date_sent?: string;
+
+  /**
+   * User who performed the update. Defaults to 'Sikkauser' if not provided.
+   */
+  user?: string;
+
+  /**
+   * Date the claim was resent (format: yyyy-mm-dd).
+   */
+  date_resent?: string;
+
+  /**
+   * Custom tracking status for OpenDental PMS only.
+   * Check PMS settings via pms_general_settings API with
+   * setting_name=ClaimTrackingStatusExcludesNone to determine if mandatory.
+   * Get values from writeback_details API with category=CustomTrackStatusType
+   * and writeback_type=claim_status.
+   */
+  custom_track_status?: string;
+
+  /**
+   * SPU check flag.
+   */
+  check_spu?: string;
+};
+
+/**
+ * Raw API response from updating a claim.
+ */
+export type SikkaClaimUpdateResponse = {
+  error_code: string;
+  http_code: string;
+  http_code_desc: string;
+  long_message: string;
+  more_information: string;
+  short_message: string;
+};
+
+/**
+ * Enriched result from claims.update() that includes
+ * the parsed writeback tracking ID extracted from long_message.
+ */
+export type SikkaClaimUpdateResult = SikkaClaimUpdateResponse & {
+  writeback_id: string | null;
+};
+
 // -----------------------------------------------------------------------------
 // Transaction Types
 

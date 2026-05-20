@@ -3,6 +3,8 @@ import {
   type SikkaClaimListResponse,
   type SikkaClaimPaymentRequest,
   type SikkaClaimPaymentResponse,
+  type SikkaClaimUpdateRequest,
+  type SikkaClaimUpdateResponse,
   type SikkaPatientListResponse,
   type SikkaPaymentTypeListResponse,
   type SikkaRequestKeyResponse,
@@ -310,6 +312,60 @@ describe('SikkaClient', () => {
       const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
       expect(lastCall[1].body).toBe(JSON.stringify(body));
       expect(lastCall[1].headers['Content-Type']).toBe('application/json');
+    });
+  });
+
+  describe('patch', () => {
+    beforeEach(async () => {
+      const mockResponse = createRequestKeyResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(mockResponse),
+        ok: true,
+      });
+      await client.authenticate();
+    });
+
+    it('should send JSON body with PATCH method and request key', async () => {
+      const patchResponse = {
+        error_code: 'API2016',
+        http_code: '200',
+        http_code_desc: 'OK',
+        long_message: 'Id:456',
+        more_information:
+          'https://api.sikkasoft.com/v4/writeback_status?id=456',
+        short_message: 'Resource updated successfully',
+      };
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(patchResponse),
+        ok: true,
+      });
+
+      const body = {
+        practice_id: 'practice-1',
+        status: 'Received',
+      };
+      await client.patch('/v4/claims/123', body);
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      expect(lastCall[1].method).toBe('PATCH');
+      expect(lastCall[1].body).toBe(JSON.stringify(body));
+      expect(lastCall[1].headers['Content-Type']).toBe('application/json');
+      expect(lastCall[1].headers['Request-Key']).toBe('test-request-key');
+    });
+
+    it('should throw on non-ok response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+        text: () => Promise.resolve('Claim not found'),
+      });
+
+      await expect(
+        client.patch('/v4/claims/999', { practice_id: 'p1' }),
+      ).rejects.toThrow(
+        'Sikka API PATCH /v4/claims/999 failed: 404 Not Found - Claim not found',
+      );
     });
   });
 
@@ -820,6 +876,165 @@ describe('SikkaClient', () => {
       expect(claims).toHaveLength(1);
       expect(claims[0].claim_sr_no).toBe('123');
       expect(claims[0].claim_status).toBe('Pending');
+    });
+  });
+
+  describe('claims.update', () => {
+    const createClaimUpdateResponse = (
+      writebackId = '5001',
+    ): SikkaClaimUpdateResponse => ({
+      error_code: 'API2016',
+      http_code: '200',
+      http_code_desc: 'OK',
+      long_message: `Id:${writebackId}`,
+      more_information: `https://api.sikkasoft.com/v4/writeback_status?id=${writebackId}`,
+      short_message: 'Resource updated successfully',
+    });
+
+    beforeEach(async () => {
+      const mockResponse = createRequestKeyResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(mockResponse),
+        ok: true,
+      });
+      await client.authenticate();
+    });
+
+    it('should send PATCH request to /v4/claims/{claim_sr_no} with body fields', async () => {
+      const updateResponse = createClaimUpdateResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(updateResponse),
+        ok: true,
+      });
+
+      const request: SikkaClaimUpdateRequest = {
+        claim_sr_no: '123456',
+        note: 'Claim received',
+        practice_id: 'practice-1',
+        status: 'Received',
+      };
+
+      const result = await client.claims.update(request);
+
+      expect(result).toMatchObject(updateResponse);
+      expect(result.writeback_id).toBe('5001');
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const url = new URL(lastCall[0]);
+      expect(url.pathname).toBe('/v4/claims/123456');
+      expect(lastCall[1].method).toBe('PATCH');
+
+      const sentBody = JSON.parse(lastCall[1].body);
+      expect(sentBody.practice_id).toBe('practice-1');
+      expect(sentBody.status).toBe('Received');
+      expect(sentBody.note).toBe('Claim received');
+      expect(sentBody.claim_sr_no).toBeUndefined();
+    });
+
+    it('should parse writeback_id from long_message', async () => {
+      const updateResponse = createClaimUpdateResponse('7777');
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(updateResponse),
+        ok: true,
+      });
+
+      const request: SikkaClaimUpdateRequest = {
+        claim_sr_no: '123456',
+        practice_id: 'practice-1',
+        status: 'Sent',
+      };
+
+      const result = await client.claims.update(request);
+
+      expect(result.writeback_id).toBe('7777');
+      expect(result.long_message).toBe('Id:7777');
+    });
+
+    it('should return null writeback_id when long_message has unexpected format', async () => {
+      const updateResponse: SikkaClaimUpdateResponse = {
+        error_code: 'API2016',
+        http_code: '200',
+        http_code_desc: 'OK',
+        long_message: 'Some unexpected message',
+        more_information: '',
+        short_message: 'Resource updated successfully',
+      };
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(updateResponse),
+        ok: true,
+      });
+
+      const request: SikkaClaimUpdateRequest = {
+        claim_sr_no: '123456',
+        note: 'Updated note',
+        practice_id: 'practice-1',
+      };
+
+      const result = await client.claims.update(request);
+
+      expect(result.writeback_id).toBeNull();
+    });
+
+    it('should send all optional fields in body', async () => {
+      const updateResponse = createClaimUpdateResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(updateResponse),
+        ok: true,
+      });
+
+      const request: SikkaClaimUpdateRequest = {
+        check_spu: 'true',
+        claim_sr_no: '123456',
+        custom_track_status: 'CustomStatus',
+        date_resent: '2024-06-15',
+        date_sent: '2024-06-01',
+        internal_note: 'Internal tracking note',
+        note: 'Claim note',
+        practice_id: 'practice-1',
+        status: 'Received',
+        user: 'TestUser',
+      };
+
+      await client.claims.update(request);
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const sentBody = JSON.parse(lastCall[1].body);
+      expect(sentBody.practice_id).toBe('practice-1');
+      expect(sentBody.status).toBe('Received');
+      expect(sentBody.note).toBe('Claim note');
+      expect(sentBody.internal_note).toBe('Internal tracking note');
+      expect(sentBody.date_sent).toBe('2024-06-01');
+      expect(sentBody.user).toBe('TestUser');
+      expect(sentBody.date_resent).toBe('2024-06-15');
+      expect(sentBody.custom_track_status).toBe('CustomStatus');
+      expect(sentBody.check_spu).toBe('true');
+      expect(sentBody.claim_sr_no).toBeUndefined();
+    });
+
+    it('should work with only required fields and note', async () => {
+      const updateResponse = createClaimUpdateResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(updateResponse),
+        ok: true,
+      });
+
+      const request: SikkaClaimUpdateRequest = {
+        claim_sr_no: '999',
+        note: 'Just a note update',
+        practice_id: 'practice-2',
+      };
+
+      await client.claims.update(request);
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const url = new URL(lastCall[0]);
+      expect(url.pathname).toBe('/v4/claims/999');
+
+      const sentBody = JSON.parse(lastCall[1].body);
+      expect(sentBody).toEqual({
+        note: 'Just a note update',
+        practice_id: 'practice-2',
+      });
     });
   });
 
