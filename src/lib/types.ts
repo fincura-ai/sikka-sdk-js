@@ -704,3 +704,52 @@ export type SikkaPaymentTypeListParams = {
  */
 export type SikkaPaymentTypeListResponse =
   SikkaPaginatedResponse<SikkaPaymentType>;
+
+// -----------------------------------------------------------------------------
+// Practice Variable Types
+
+/**
+ * Sikka practice variable record.
+ * Represents configurable values like appointment statuses, claim statuses,
+ * and patient statuses from the practice management system.
+ */
+export type SikkaPracticeVariable = {
+  description: string;
+  href: string;
+  practice_href: string;
+  practice_id: string;
+  service_name: string;
+  value: string;
+};
+
+/**
+ * Parameters for listing practice variables
+ */
+export type SikkaPracticeVariableListParams = {
+  /**
+   * Results per page
+   */
+  limit?: number;
+  /**
+   * Pagination offset
+   */
+  offset?: number;
+  /**
+   * Practice ID of office
+   */
+  practice_id?: string;
+  /**
+   * Service item as per the response
+   */
+  service_item?: string;
+  /**
+   * Service name filter (e.g. "Claim Status", "Appointment Status")
+   */
+  service_name?: string;
+};
+
+/**
+ * Response from the practice_variables endpoint
+ */
+export type SikkaPracticeVariableListResponse =
+  SikkaPaginatedResponse<SikkaPracticeVariable>;

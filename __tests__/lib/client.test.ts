@@ -7,6 +7,7 @@ import {
   type SikkaClaimUpdateResponse,
   type SikkaPatientListResponse,
   type SikkaPaymentTypeListResponse,
+  type SikkaPracticeVariableListResponse,
   type SikkaRequestKeyResponse,
   type SikkaTransactionListResponse,
   type SikkaWritebackStatusResponse,
@@ -793,6 +794,69 @@ describe('SikkaClient', () => {
       expect(types[0].description).toBe('Cash Payment');
       expect(types[1].code).toBe('2');
       expect(types[1].description).toBe('Insurance Payment');
+    });
+  });
+
+  describe('practiceVariables.list', () => {
+    beforeEach(async () => {
+      const mockResponse = createRequestKeyResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(mockResponse),
+        ok: true,
+      });
+      await client.authenticate();
+    });
+
+    it('should return array of practice variables', async () => {
+      const practiceVariablesResponse: SikkaPracticeVariableListResponse = {
+        execution_time: '0.1s',
+        items: [
+          {
+            description: 'Sent',
+            href: 'https://api.sikkasoft.com/v4/practices/1/practice_variables',
+            practice_href: 'https://api.sikkasoft.com/v4/practices/1',
+            practice_id: '1',
+            service_name: 'Claim Status',
+            value: 'Sent',
+          },
+          {
+            description: 'Received',
+            href: 'https://api.sikkasoft.com/v4/practices/1/practice_variables',
+            practice_href: 'https://api.sikkasoft.com/v4/practices/1',
+            practice_id: '1',
+            service_name: 'Claim Status',
+            value: 'Received',
+          },
+        ],
+        limit: '500',
+        offset: '0',
+        pagination: {
+          current: '1',
+          first: '1',
+          last: '1',
+          next: '',
+          previous: '',
+        },
+        total_count: '2',
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(practiceVariablesResponse)),
+      });
+
+      const variables = await client.practiceVariables.list({
+        service_name: 'Claim Status',
+      });
+
+      expect(variables).toHaveLength(2);
+      expect(variables[0].service_name).toBe('Claim Status');
+      expect(variables[0].value).toBe('Sent');
+      expect(variables[1].value).toBe('Received');
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const url = new URL(lastCall[0]);
+      expect(url.pathname).toBe('/v4/practice_variables');
+      expect(url.searchParams.get('service_name')).toBe('Claim Status');
     });
   });
 
