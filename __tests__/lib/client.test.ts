@@ -909,9 +909,9 @@ describe('SikkaClient', () => {
 
       const request: SikkaClaimUpdateRequest = {
         claim_sr_no: '123456',
+        note: 'Claim received',
         practice_id: 'practice-1',
         status: 'Received',
-        note: 'Claim received',
       };
 
       const result = await client.claims.update(request);
@@ -966,8 +966,8 @@ describe('SikkaClient', () => {
 
       const request: SikkaClaimUpdateRequest = {
         claim_sr_no: '123456',
-        practice_id: 'practice-1',
         note: 'Updated note',
+        practice_id: 'practice-1',
       };
 
       const result = await client.claims.update(request);
@@ -983,16 +983,16 @@ describe('SikkaClient', () => {
       });
 
       const request: SikkaClaimUpdateRequest = {
+        check_spu: 'true',
         claim_sr_no: '123456',
+        custom_track_status: 'CustomStatus',
+        date_resent: '2024-06-15',
+        date_sent: '2024-06-01',
+        internal_note: 'Internal tracking note',
+        note: 'Claim note',
         practice_id: 'practice-1',
         status: 'Received',
-        note: 'Claim note',
-        internal_note: 'Internal tracking note',
-        date_sent: '2024-06-01',
         user: 'TestUser',
-        date_resent: '2024-06-15',
-        custom_track_status: 'CustomStatus',
-        check_spu: 'true',
       };
 
       await client.claims.update(request);
@@ -1020,8 +1020,8 @@ describe('SikkaClient', () => {
 
       const request: SikkaClaimUpdateRequest = {
         claim_sr_no: '999',
-        practice_id: 'practice-2',
         note: 'Just a note update',
+        practice_id: 'practice-2',
       };
 
       await client.claims.update(request);
@@ -1032,8 +1032,8 @@ describe('SikkaClient', () => {
 
       const sentBody = JSON.parse(lastCall[1].body);
       expect(sentBody).toEqual({
-        practice_id: 'practice-2',
         note: 'Just a note update',
+        practice_id: 'practice-2',
       });
     });
   });

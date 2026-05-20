@@ -169,9 +169,9 @@ export class SikkaClient {
     update: async (
       request: SikkaClaimUpdateRequest,
     ): Promise<SikkaClaimUpdateResult> => {
-      const { claim_sr_no, ...body } = request;
+      const { claim_sr_no: claimSrNo, ...body } = request;
       const response = await this.patch<SikkaClaimUpdateResponse>(
-        `/v4/claims/${claim_sr_no}`,
+        `/v4/claims/${claimSrNo}`,
         body as unknown as Record<string, unknown>,
       );
       const writebackId = parseWritebackId(response.long_message);
@@ -460,43 +460,6 @@ export class SikkaClient {
   }
 
   /**
-   * Make an authenticated POST request to the Sikka API.
-   */
-  async post<T>(endpoint: string, body: Record<string, unknown>): Promise<T> {
-    const log = getLogger();
-
-    await this.ensureAuthenticated();
-
-    const requestKey = this.getRequestKey();
-    const url = new URL(`${this.baseUrl}${endpoint}`);
-    url.searchParams.set('request_key', requestKey);
-
-    log.debug('Sikka API POST request', { body, endpoint });
-
-    const response = await fetch(url.toString(), {
-      body: JSON.stringify(body),
-      headers: {
-        'Content-Type': 'application/json',
-        'Request-Key': requestKey,
-      },
-      method: 'POST',
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      throw new Error(
-        `Sikka API POST ${endpoint} failed: ${response.status} ${response.statusText} - ${errorBody}`,
-      );
-    }
-
-    const data = (await response.json()) as T;
-
-    log.debug('Sikka API POST response', { endpoint, status: response.status });
-
-    return data;
-  }
-
-  /**
    * Make an authenticated PATCH request to the Sikka API.
    */
   async patch<T>(endpoint: string, body: Record<string, unknown>): Promise<T> {
@@ -532,6 +495,43 @@ export class SikkaClient {
       endpoint,
       status: response.status,
     });
+
+    return data;
+  }
+
+  /**
+   * Make an authenticated POST request to the Sikka API.
+   */
+  async post<T>(endpoint: string, body: Record<string, unknown>): Promise<T> {
+    const log = getLogger();
+
+    await this.ensureAuthenticated();
+
+    const requestKey = this.getRequestKey();
+    const url = new URL(`${this.baseUrl}${endpoint}`);
+    url.searchParams.set('request_key', requestKey);
+
+    log.debug('Sikka API POST request', { body, endpoint });
+
+    const response = await fetch(url.toString(), {
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        'Request-Key': requestKey,
+      },
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(
+        `Sikka API POST ${endpoint} failed: ${response.status} ${response.statusText} - ${errorBody}`,
+      );
+    }
+
+    const data = (await response.json()) as T;
+
+    log.debug('Sikka API POST response', { endpoint, status: response.status });
 
     return data;
   }
