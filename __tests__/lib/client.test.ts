@@ -5,6 +5,7 @@ import {
   type SikkaClaimPaymentResponse,
   type SikkaClaimUpdateRequest,
   type SikkaClaimUpdateResponse,
+  type SikkaInsuranceCompanyDetailListResponse,
   type SikkaPatientListResponse,
   type SikkaPaymentTypeListResponse,
   type SikkaPracticeVariableListResponse,
@@ -857,6 +858,87 @@ describe('SikkaClient', () => {
       const url = new URL(lastCall[0]);
       expect(url.pathname).toBe('/v4/practice_variables');
       expect(url.searchParams.get('service_name')).toBe('Claim Status');
+    });
+  });
+
+  describe('insuranceCompanyDetails.list', () => {
+    beforeEach(async () => {
+      const mockResponse = createRequestKeyResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(mockResponse),
+        ok: true,
+      });
+      await client.authenticate();
+    });
+
+    it('should return array of insurance company details', async () => {
+      const insuranceCompanyDetailsResponse: SikkaInsuranceCompanyDetailListResponse =
+        {
+          execution_time: '31',
+          items: [
+            {
+              href: 'https://api.sikkasoft.com/v4/practices/1/insurance_company_details/1677',
+              address_line1: 'P.O. Box 2940',
+              city: 'Clinton',
+              state: 'IA',
+              zipcode: '52733',
+              cell: '',
+              practice_id: '1',
+              practice_href: 'https://api.sikkasoft.com/v4/practices/1',
+              insurance_company_id: '1677',
+              insurance_company_name: 'Sun Life Financial',
+              payer_id: '70408',
+              notes: '',
+              payer_type: 'Commercial',
+              era_capable: 'No',
+              provider_practice_id: '0',
+              web_link: '0',
+              default_plan: '0',
+              phone1: '8004427742',
+              ext1: '',
+              phone2: '',
+              ext2: '',
+              phone3: '',
+              ext3: '',
+              fax1: '',
+              fax2: '',
+              beeper: '',
+              email1: '',
+              email2: '',
+              trojan_id: '',
+              contact: '',
+            },
+          ],
+          limit: '500',
+          offset: '0',
+          pagination: {
+            current: '1',
+            first: '1',
+            last: '1',
+            next: '',
+            previous: '',
+          },
+          total_count: '1',
+        };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(JSON.stringify(insuranceCompanyDetailsResponse)),
+      });
+
+      const companies = await client.insuranceCompanyDetails.list({
+        practice_id: '1',
+      });
+
+      expect(companies).toHaveLength(1);
+      expect(companies[0].insurance_company_id).toBe('1677');
+      expect(companies[0].insurance_company_name).toBe('Sun Life Financial');
+      expect(companies[0].payer_type).toBe('Commercial');
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const url = new URL(lastCall[0]);
+      expect(url.pathname).toBe('/v4/insurance_company_details');
+      expect(url.searchParams.get('practice_id')).toBe('1');
     });
   });
 

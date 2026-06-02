@@ -199,6 +199,41 @@ const cashType = await sikka.paymentTypes.list({ code: '1' });
 
 ---
 
+### Insurance Company Details
+
+#### `insuranceCompanyDetails.list(params)`
+
+List insurance company details from practices.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `practice_id` | string | | Filter by practice ID |
+| `insurance_company_id` | string | | Filter by insurance company ID |
+| `sort_by` | string | | Sort results by: `insurance_company_id` (default), `insurance_company_name`, or `practice_id` |
+| `limit` | number | | Results per page |
+| `offset` | number | | Pagination offset |
+
+**Returns:** `Promise<SikkaInsuranceCompanyDetail[]>`
+
+```typescript
+// Get all insurance companies
+const companies = await sikka.insuranceCompanyDetails.list();
+
+// Get insurance companies for a specific practice
+const practiceCompanies = await sikka.insuranceCompanyDetails.list({
+  practice_id: '1',
+});
+
+// Get a specific insurance company
+const company = await sikka.insuranceCompanyDetails.list({
+  insurance_company_id: '1677',
+});
+```
+
+---
+
 ### Transactions
 
 Transactions represent both procedures (service line items) and payments.
@@ -317,6 +352,11 @@ import type {
   SikkaPaymentType,
   SikkaPaymentTypeListParams,
   SikkaPaymentTypeListResponse,
+
+  // Insurance Company Details
+  SikkaInsuranceCompanyDetail,
+  SikkaInsuranceCompanyDetailListParams,
+  SikkaInsuranceCompanyDetailListResponse,
 
   // Claim Payments
   SikkaClaimPaymentRequest,

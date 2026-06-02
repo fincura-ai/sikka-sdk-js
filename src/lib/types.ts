@@ -753,3 +753,76 @@ export type SikkaPracticeVariableListParams = {
  */
 export type SikkaPracticeVariableListResponse =
   SikkaPaginatedResponse<SikkaPracticeVariable>;
+
+// -----------------------------------------------------------------------------
+// Insurance Company Details
+// -----------------------------------------------------------------------------
+
+/**
+ * Sikka insurance company detail record.
+ * Represents an insurance company associated with a practice.
+ */
+export type SikkaInsuranceCompanyDetail = {
+  href: string;
+  address_line1: string;
+  city: string;
+  state: string;
+  zipcode: string;
+  cell: string;
+  practice_id: string;
+  practice_href: string;
+  insurance_company_id: string;
+  insurance_company_name: string;
+  payer_id: string;
+  notes: string;
+  payer_type: string;
+  era_capable: string;
+  provider_practice_id: string;
+  web_link: string;
+  default_plan: string;
+  phone1: string;
+  ext1: string;
+  phone2: string;
+  ext2: string;
+  phone3: string;
+  ext3: string;
+  fax1: string;
+  fax2: string;
+  beeper: string;
+  email1: string;
+  email2: string;
+  trojan_id: string;
+  contact: string;
+};
+
+/**
+ * Parameters for listing insurance company details
+ */
+export type SikkaInsuranceCompanyDetailListParams = {
+  /**
+   * Results per page
+   */
+  limit?: number;
+  /**
+   * Pagination offset
+   */
+  offset?: number;
+  /**
+   * Practice ID of office
+   */
+  practice_id?: string;
+  /**
+   * Insurance company ID in practice management system
+   */
+  insurance_company_id?: string;
+  /**
+   * Sort order for results
+   */
+  sort_by?: 'insurance_company_id' | 'insurance_company_name' | 'practice_id';
+};
+
+/**
+ * Response from the insurance_company_details endpoint
+ */
+export type SikkaInsuranceCompanyDetailListResponse =
+  SikkaPaginatedResponse<SikkaInsuranceCompanyDetail>;
