@@ -763,36 +763,36 @@ export type SikkaPracticeVariableListResponse =
  * Represents an insurance company associated with a practice.
  */
 export type SikkaInsuranceCompanyDetail = {
-  href: string;
   address_line1: string;
-  city: string;
-  state: string;
-  zipcode: string;
+  beeper: string;
   cell: string;
-  practice_id: string;
-  practice_href: string;
-  insurance_company_id: string;
-  insurance_company_name: string;
-  payer_id: string;
-  notes: string;
-  payer_type: string;
-  era_capable: string;
-  provider_practice_id: string;
-  web_link: string;
+  city: string;
+  contact: string;
   default_plan: string;
-  phone1: string;
+  email1: string;
+  email2: string;
+  era_capable: string;
   ext1: string;
-  phone2: string;
   ext2: string;
-  phone3: string;
   ext3: string;
   fax1: string;
   fax2: string;
-  beeper: string;
-  email1: string;
-  email2: string;
+  href: string;
+  insurance_company_id: string;
+  insurance_company_name: string;
+  notes: string;
+  payer_id: string;
+  payer_type: string;
+  phone1: string;
+  phone2: string;
+  phone3: string;
+  practice_href: string;
+  practice_id: string;
+  provider_practice_id: string;
+  state: string;
   trojan_id: string;
-  contact: string;
+  web_link: string;
+  zipcode: string;
 };
 
 /**
@@ -836,36 +836,36 @@ export type SikkaInsuranceCompanyDetailListResponse =
  * Represents insurance subscriber data associated with a patient in a practice.
  */
 export type SikkaSubscriber = {
-  href: string;
-  patient_href: string;
-  patient_id: string;
-  firstname: string;
-  middlename: string;
-  lastname: string;
-  salutation: string;
-  birthdate: string;
-  gender: string;
   address_line1: string;
   address_line2: string;
+  birthdate: string;
   city: string;
-  state: string;
-  zipcode: string;
-  practice_id: string;
-  practice_href: string;
-  subscriber_id: string;
-  type: string;
-  insurance_company_id: string;
-  insurance_company_href: string;
   employer_name: string;
-  patient_relation: string;
+  family_deductible_reamining: string;
+  firstname: string;
+  gender: string;
+  href: string;
   identification_type: string;
+  individual_deductible_remaining: string;
   individual_used: string;
   individual_used_treatment_plan: string;
-  individual_deductible_remaining: string;
+  insurance_company_href: string;
+  insurance_company_id: string;
+  insurance_effective_date: string;
+  lastname: string;
+  middlename: string;
   ortho_used: string;
   ortho_used_treatment_plan: string;
-  insurance_effective_date: string;
-  family_deductible_reamining: string;
+  patient_href: string;
+  patient_id: string;
+  patient_relation: string;
+  practice_href: string;
+  practice_id: string;
+  salutation: string;
+  state: string;
+  subscriber_id: string;
+  type: string;
+  zipcode: string;
 };
 
 /**

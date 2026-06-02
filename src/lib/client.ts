@@ -12,15 +12,15 @@ import {
   type SikkaClaimUpdateResult,
   type SikkaClientConfig,
   type SikkaClientCredentials,
+  type SikkaInsuranceCompanyDetail,
+  type SikkaInsuranceCompanyDetailListParams,
+  type SikkaInsuranceCompanyDetailListResponse,
   type SikkaPatient,
   type SikkaPatientListParams,
   type SikkaPatientListResponse,
   type SikkaPaymentType,
   type SikkaPaymentTypeListParams,
   type SikkaPaymentTypeListResponse,
-  type SikkaInsuranceCompanyDetail,
-  type SikkaInsuranceCompanyDetailListParams,
-  type SikkaInsuranceCompanyDetailListResponse,
   type SikkaPracticeVariable,
   type SikkaPracticeVariableListParams,
   type SikkaPracticeVariableListResponse,
@@ -189,6 +189,39 @@ export class SikkaClient {
   };
 
   /**
+   * Insurance company details endpoints.
+   * Returns insurance company information associated with practices.
+   */
+  public readonly insuranceCompanyDetails = {
+    /**
+     * List insurance company details, optionally filtered by practice or company.
+     *
+     * @param params - Optional filter, sort, and pagination parameters
+     * @returns List of insurance company details
+     *
+     * @example
+     * ```typescript
+     * // Get all insurance companies
+     * const companies = await client.insuranceCompanyDetails.list();
+     *
+     * // Get insurance companies for a specific practice
+     * const practiceCompanies = await client.insuranceCompanyDetails.list({
+     *   practice_id: '1',
+     * });
+     * ```
+     */
+    list: async (
+      params: SikkaInsuranceCompanyDetailListParams = {},
+    ): Promise<SikkaInsuranceCompanyDetail[]> => {
+      const response = await this.get<SikkaInsuranceCompanyDetailListResponse>(
+        '/v4/insurance_company_details',
+        params,
+      );
+      return response.items;
+    },
+  };
+
+  /**
    * Patient management endpoints.
    */
   public readonly patients = {
@@ -278,40 +311,6 @@ export class SikkaClient {
         '/v4/practice_variables',
         params,
       );
-      return response.items;
-    },
-  };
-
-  /**
-   * Insurance company details endpoints.
-   * Returns insurance company information associated with practices.
-   */
-  public readonly insuranceCompanyDetails = {
-    /**
-     * List insurance company details, optionally filtered by practice or company.
-     *
-     * @param params - Optional filter, sort, and pagination parameters
-     * @returns List of insurance company details
-     *
-     * @example
-     * ```typescript
-     * // Get all insurance companies
-     * const companies = await client.insuranceCompanyDetails.list();
-     *
-     * // Get insurance companies for a specific practice
-     * const practiceCompanies = await client.insuranceCompanyDetails.list({
-     *   practice_id: '1',
-     * });
-     * ```
-     */
-    list: async (
-      params: SikkaInsuranceCompanyDetailListParams = {},
-    ): Promise<SikkaInsuranceCompanyDetail[]> => {
-      const response =
-        await this.get<SikkaInsuranceCompanyDetailListResponse>(
-          '/v4/insurance_company_details',
-          params,
-        );
       return response.items;
     },
   };
