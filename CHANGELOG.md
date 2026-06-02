@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v1.6.0](https://github.com/fincura-ai/sikka-sdk-js/compare/2f3b8c18d090a86534fabbd32a8f651d7c09a58b..v1.6.0) - 2026-06-02
+#### 🌟 Features
+- add subscribers endpoint - ([387d986](https://github.com/fincura-ai/sikka-sdk-js/commit/387d986cbbfb04dc58a73a400a70e26c77bb86b0)) - louis-lamoureux
+- add insurance payers - ([2f3b8c1](https://github.com/fincura-ai/sikka-sdk-js/commit/2f3b8c18d090a86534fabbd32a8f651d7c09a58b)) - louis-lamoureux
+#### 🐛 Bug Fixes
+- lint - ([4dca932](https://github.com/fincura-ai/sikka-sdk-js/commit/4dca9328b158690155514eae358939b1d3e8cbba)) - louis-lamoureux
+
+- - -
+
 ## [v1.5.0](https://github.com/fincura-ai/sikka-sdk-js/compare/0ed3557a4a1dabf8171ac4099a49baf1acb57ad9..v1.5.0) - 2026-05-20
 #### 🌟 Features
 - add practice variables (#10) - ([0ed3557](https://github.com/fincura-ai/sikka-sdk-js/commit/0ed3557a4a1dabf8171ac4099a49baf1acb57ad9)) - [@louis-lamoureux](https://github.com/louis-lamoureux)
