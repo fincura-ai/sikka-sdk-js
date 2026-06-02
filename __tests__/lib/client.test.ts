@@ -10,6 +10,7 @@ import {
   type SikkaPaymentTypeListResponse,
   type SikkaPracticeVariableListResponse,
   type SikkaRequestKeyResponse,
+  type SikkaSubscriberListResponse,
   type SikkaTransactionListResponse,
   type SikkaWritebackStatusResponse,
 } from '../../src/lib/types.js';
@@ -939,6 +940,87 @@ describe('SikkaClient', () => {
       const url = new URL(lastCall[0]);
       expect(url.pathname).toBe('/v4/insurance_company_details');
       expect(url.searchParams.get('practice_id')).toBe('1');
+    });
+  });
+
+  describe('subscribers.list', () => {
+    beforeEach(async () => {
+      const mockResponse = createRequestKeyResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(mockResponse),
+        ok: true,
+      });
+      await client.authenticate();
+    });
+
+    it('should return array of subscribers', async () => {
+      const subscribersResponse: SikkaSubscriberListResponse = {
+        execution_time: '12',
+        items: [
+          {
+            href: 'https://api.sikkasoft.com/v4/practices/1/subscribers/994',
+            patient_href:
+              'https://api.sikkasoft.com/v4/practices/1/patients/994',
+            patient_id: '994',
+            firstname: 'te',
+            middlename: '',
+            lastname: 'Sr',
+            salutation: '',
+            birthdate: '1945-03-20T00:00:00',
+            gender: 'M',
+            address_line1: '3 AVENUE',
+            address_line2: '',
+            city: 'Miami',
+            state: 'FL',
+            zipcode: '33155',
+            practice_id: '1',
+            practice_href: 'https://api.sikkasoft.com/v4/practices/1',
+            subscriber_id: '217_35',
+            type: 'Dental Primary',
+            insurance_company_id: '217',
+            insurance_company_href:
+              'https://api.sikkasoft.com/v4/practices/1/insurance_companies/217',
+            employer_name: 'ADVANCE AUTO PARTS',
+            patient_relation: 'Self',
+            identification_type: 'Pat_Insd',
+            individual_used: '1450.0000',
+            individual_used_treatment_plan: '',
+            individual_deductible_remaining: '50.0000',
+            ortho_used: '',
+            ortho_used_treatment_plan: '',
+            insurance_effective_date: '',
+            family_deductible_reamining: '',
+          },
+        ],
+        limit: '500',
+        offset: '0',
+        pagination: {
+          current: '1',
+          first: '1',
+          last: '1',
+          next: '',
+          previous: '',
+        },
+        total_count: '1',
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(subscribersResponse)),
+      });
+
+      const subscribers = await client.subscribers.list({
+        patient_id: '994',
+      });
+
+      expect(subscribers).toHaveLength(1);
+      expect(subscribers[0].patient_id).toBe('994');
+      expect(subscribers[0].subscriber_id).toBe('217_35');
+      expect(subscribers[0].patient_relation).toBe('Self');
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const url = new URL(lastCall[0]);
+      expect(url.pathname).toBe('/v4/subscribers');
+      expect(url.searchParams.get('patient_id')).toBe('994');
     });
   });
 

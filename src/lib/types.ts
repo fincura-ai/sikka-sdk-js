@@ -826,3 +826,80 @@ export type SikkaInsuranceCompanyDetailListParams = {
  */
 export type SikkaInsuranceCompanyDetailListResponse =
   SikkaPaginatedResponse<SikkaInsuranceCompanyDetail>;
+
+// -----------------------------------------------------------------------------
+// Subscribers
+// -----------------------------------------------------------------------------
+
+/**
+ * Sikka subscriber record.
+ * Represents insurance subscriber data associated with a patient in a practice.
+ */
+export type SikkaSubscriber = {
+  href: string;
+  patient_href: string;
+  patient_id: string;
+  firstname: string;
+  middlename: string;
+  lastname: string;
+  salutation: string;
+  birthdate: string;
+  gender: string;
+  address_line1: string;
+  address_line2: string;
+  city: string;
+  state: string;
+  zipcode: string;
+  practice_id: string;
+  practice_href: string;
+  subscriber_id: string;
+  type: string;
+  insurance_company_id: string;
+  insurance_company_href: string;
+  employer_name: string;
+  patient_relation: string;
+  identification_type: string;
+  individual_used: string;
+  individual_used_treatment_plan: string;
+  individual_deductible_remaining: string;
+  ortho_used: string;
+  ortho_used_treatment_plan: string;
+  insurance_effective_date: string;
+  family_deductible_reamining: string;
+};
+
+/**
+ * Parameters for listing subscribers
+ */
+export type SikkaSubscriberListParams = {
+  /**
+   * Results per page
+   */
+  limit?: number;
+  /**
+   * Pagination offset
+   */
+  offset?: number;
+  /**
+   * Patient ID from practice
+   */
+  patient_id?: string;
+  /**
+   * Practice ID of office
+   */
+  practice_id?: string;
+  /**
+   * Subscriber ID of office
+   */
+  subscriber_id?: string;
+  /**
+   * Sort order for results
+   */
+  sort_by?: 'patient_id' | 'practice_id';
+};
+
+/**
+ * Response from the subscribers endpoint
+ */
+export type SikkaSubscriberListResponse =
+  SikkaPaginatedResponse<SikkaSubscriber>;

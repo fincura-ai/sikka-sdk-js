@@ -234,6 +234,42 @@ const company = await sikka.insuranceCompanyDetails.list({
 
 ---
 
+### Subscribers
+
+#### `subscribers.list(params)`
+
+List insurance subscriber data from practices.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `patient_id` | string | | Filter by patient ID |
+| `practice_id` | string | | Filter by practice ID |
+| `subscriber_id` | string | | Filter by subscriber ID |
+| `sort_by` | string | | Sort results by: `patient_id` (default) or `practice_id` |
+| `limit` | number | | Results per page |
+| `offset` | number | | Pagination offset |
+
+**Returns:** `Promise<SikkaSubscriber[]>`
+
+```typescript
+// Get all subscribers
+const subscribers = await sikka.subscribers.list();
+
+// Get subscribers for a specific patient
+const patientSubscribers = await sikka.subscribers.list({
+  patient_id: '994',
+});
+
+// Get subscribers for a specific practice
+const practiceSubscribers = await sikka.subscribers.list({
+  practice_id: '1',
+});
+```
+
+---
+
 ### Transactions
 
 Transactions represent both procedures (service line items) and payments.
@@ -357,6 +393,11 @@ import type {
   SikkaInsuranceCompanyDetail,
   SikkaInsuranceCompanyDetailListParams,
   SikkaInsuranceCompanyDetailListResponse,
+
+  // Subscribers
+  SikkaSubscriber,
+  SikkaSubscriberListParams,
+  SikkaSubscriberListResponse,
 
   // Claim Payments
   SikkaClaimPaymentRequest,

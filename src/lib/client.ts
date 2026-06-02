@@ -26,6 +26,9 @@ import {
   type SikkaPracticeVariableListResponse,
   type SikkaRequestKeyRequest,
   type SikkaRequestKeyResponse,
+  type SikkaSubscriber,
+  type SikkaSubscriberListParams,
+  type SikkaSubscriberListResponse,
   type SikkaTransaction,
   type SikkaTransactionListParams,
   type SikkaTransactionListResponse,
@@ -309,6 +312,39 @@ export class SikkaClient {
           '/v4/insurance_company_details',
           params,
         );
+      return response.items;
+    },
+  };
+
+  /**
+   * Subscribers endpoints.
+   * Returns insurance subscriber data associated with patients in practices.
+   */
+  public readonly subscribers = {
+    /**
+     * List subscribers, optionally filtered by patient, practice, or subscriber ID.
+     *
+     * @param params - Optional filter, sort, and pagination parameters
+     * @returns List of subscribers
+     *
+     * @example
+     * ```typescript
+     * // Get all subscribers
+     * const subscribers = await client.subscribers.list();
+     *
+     * // Get subscribers for a specific patient
+     * const patientSubscribers = await client.subscribers.list({
+     *   patient_id: '994',
+     * });
+     * ```
+     */
+    list: async (
+      params: SikkaSubscriberListParams = {},
+    ): Promise<SikkaSubscriber[]> => {
+      const response = await this.get<SikkaSubscriberListResponse>(
+        '/v4/subscribers',
+        params,
+      );
       return response.items;
     },
   };
