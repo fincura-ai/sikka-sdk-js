@@ -1,6 +1,9 @@
 import { getLogger } from './logger.js';
 import {
   type SikkaApiError,
+  type SikkaAuthorizedPractice,
+  type SikkaAuthorizedPracticeListParams,
+  type SikkaAuthorizedPracticeListResponse,
   type SikkaClaim,
   type SikkaClaimListParams,
   type SikkaClaimListResponse,
@@ -41,6 +44,11 @@ const SIKKA_BASE_URL = 'https://api.sikkasoft.com';
 const WRITEBACK_ID_PATTERN = /^Id:(\d+)$/u;
 
 /**
+ * Page size used when auto-paginating the authorized_practices endpoint.
+ */
+const AUTHORIZED_PRACTICES_PAGE_SIZE = 500;
+
+/**
  * Extract the numeric writeback tracking ID from the long_message field.
  * Expected format: "Id:3809955"
  */
@@ -75,6 +83,126 @@ const parseWritebackId = (longMessage: string | undefined): string | null => {
  * ```
  */
 export class SikkaClient {
+  /**
+   * Authorized practices endpoints.
+   * Returns your authorized practices with the Sikka practice utility last
+   * refresh and data insert times.
+   */
+  public readonly authorizedPractices = {
+    /**
+     * Get a single authorized practice by its office ID.
+     *
+     * This is the primary access pattern for resolving "what PMS does this
+     * office run", since `office_id` (e.g. "D13303") is the unique identifier
+     * for a practice/office. Matching is a case-sensitive exact match.
+     *
+     * Internally this lists all authorized practices (`show: 'all'`, with
+     * auto-pagination) and returns the first record whose `office_id` matches.
+     *
+     * @param officeId - The unique office ID to look up
+     * @returns The matching authorized practice, or `null` if none matches
+     *
+     * @example
+     * ```typescript
+     * const practice = await client.authorizedPractices.getByOfficeId('D13303');
+     * if (practice) {
+     *   console.log(practice.practice_management_system);
+     * }
+     * ```
+     */
+    getByOfficeId: async (
+      officeId: string,
+    ): Promise<SikkaAuthorizedPractice | null> => {
+      const practices = await this.authorizedPractices.list({ show: 'all' });
+      return (
+        practices.find((practice) => practice.office_id === officeId) ?? null
+      );
+    },
+
+    /**
+     * List your authorized practices, auto-paginating to completion.
+     *
+     * By default the API returns only practice id 1. Pass `show: 'all'` to
+     * retrieve every authorized office. This method follows the response
+     * pagination (offset/limit + `pagination.next`) and accumulates all pages,
+     * so the returned array contains every matching record.
+     *
+     * Items are returned RAW: no normalization, filtering, or coercion is
+     * applied. In particular, `practice_management_system` values are
+     * inconsistent in case/spelling across records — callers should normalize
+     * themselves.
+     *
+     * WARNING: `practice_id` is NOT unique across offices — the live API can
+     * return the same `practice_id` (e.g. "1") for every authorized office. Key
+     * off `office_id` (e.g. "D13303") instead. See `getByOfficeId()`.
+     *
+     * @param params - Optional filter, sort, and pagination parameters. A
+     *   caller-supplied `offset`/`limit` controls the starting page and page
+     *   size; pagination then continues from there until all items are fetched.
+     * @returns List of all authorized practices across every page
+     *
+     * @example
+     * ```typescript
+     * // Get the default practice
+     * const practices = await client.authorizedPractices.list();
+     *
+     * // Get all authorized practices (across all pages)
+     * const allPractices = await client.authorizedPractices.list({
+     *   show: 'all',
+     * });
+     * ```
+     */
+    list: async (
+      params: SikkaAuthorizedPracticeListParams = {},
+    ): Promise<SikkaAuthorizedPractice[]> => {
+      const items: SikkaAuthorizedPractice[] = [];
+
+      // Sikka's `offset` is a 0-indexed PAGE NUMBER (not a record offset): the
+      // next page is `offset + 1` with `limit` held constant. To stay correct
+      // regardless of those semantics, we never compute the next offset
+      // ourselves — we follow the `pagination.next` URL's query params verbatim.
+      let offset: number | string = params.offset ?? 0;
+      let limit: number | string =
+        params.limit ?? AUTHORIZED_PRACTICES_PAGE_SIZE;
+
+      for (;;) {
+        const response: SikkaAuthorizedPracticeListResponse =
+          await this.get<SikkaAuthorizedPracticeListResponse>(
+            '/v4/authorized_practices',
+            { ...params, limit, offset },
+          );
+
+        const pageItems = response.items ?? [];
+        items.push(...pageItems);
+
+        const totalCount = Number.parseInt(response.total_count, 10);
+        const pageSize = Number.parseInt(String(limit), 10);
+        const nextUrl = response.pagination?.next;
+
+        // Stop when the page came back empty, we've reached the reported
+        // total, the API reported no next page, or the page was not full
+        // (a reliable "last page" signal that guards against infinite loops).
+        if (
+          pageItems.length === 0 ||
+          (!Number.isNaN(totalCount) && items.length >= totalCount) ||
+          !nextUrl ||
+          (!Number.isNaN(pageSize) && pageItems.length < pageSize)
+        ) {
+          break;
+        }
+
+        // Advance strictly by what the API tells us, rather than doing
+        // `offset += limit` arithmetic (which would be wrong for page-number
+        // semantics).
+        const nextSearch = new URL(nextUrl).searchParams;
+        offset = nextSearch.get('offset') ?? offset;
+        limit = nextSearch.get('limit') ?? limit;
+      }
+
+      return items;
+    },
+  };
+
   /**
    * Claim payment endpoints.
    */
