@@ -48,46 +48,6 @@ export type SikkaApiError = {
 };
 
 /**
- * An authorized practice from the authorized_practices endpoint
- */
-export type SikkaAuthorizedPractice = {
-  address: string;
-  city: string;
-  data_insert_date: string;
-  data_synchronization_date: string;
-  domain: string;
-  email: string;
-  href: string;
-  office_id: string;
-  practice_id: string;
-  practice_management_system: string;
-  practice_management_system_refresh_date: string;
-  practice_management_system_version: string;
-  practice_name: string;
-  secret_key: string;
-  state: string;
-  zip: string;
-};
-
-/**
- * Response from the authorized_practices endpoint
- */
-export type SikkaAuthorizedPracticesResponse = {
-  execution_time: string;
-  items: SikkaAuthorizedPractice[];
-  limit: string;
-  offset: string;
-  pagination: {
-    current: string;
-    first: string;
-    last: string;
-    next: string;
-    previous: string;
-  };
-  total_count: string;
-};
-
-/**
  * App-level credentials (from env vars)
  */
 export type SikkaAppCredentials = {
@@ -903,3 +863,127 @@ export type SikkaSubscriberListParams = {
  */
 export type SikkaSubscriberListResponse =
   SikkaPaginatedResponse<SikkaSubscriber>;
+
+// -----------------------------------------------------------------------------
+// Authorized Practices
+// -----------------------------------------------------------------------------
+
+/**
+ * Sikka authorized practice record.
+ * Represents a practice authorized for your app, including the Sikka practice
+ * utility last refresh and data insert times.
+ *
+ * IMPORTANT: `practice_id` is NOT unique across offices — the live API can
+ * return the same `practice_id` (e.g. "1") for every authorized office. Use
+ * `office_id` (e.g. "D13303") as the unique identifier for a practice/office.
+ *
+ * Values such as `practice_management_system` are returned RAW from the
+ * provider and are inconsistent in case/spelling across records (e.g.
+ * "Opendental" vs "OpenDental"). The SDK does not normalize them; callers are
+ * responsible for any normalization.
+ */
+export type SikkaAuthorizedPractice = {
+  address: string;
+  city: string;
+  data_insert_date: string;
+  data_synchronization_date: string;
+  /**
+   * Difference in minutes between the last PMS refresh and data insert.
+   * May be absent on some records.
+   */
+  difference_in_minutes?: string;
+  domain: string;
+  /**
+   * Email associated with the office. May be absent on some records.
+   */
+  email?: string;
+  /**
+   * Financial system name. May be absent for practices without a financial
+   * system integration.
+   */
+  financial_system?: string;
+  financial_system_refresh_date?: string;
+  financial_system_version?: string;
+  href: string;
+  /**
+   * Unique identifier for the office (e.g. "D13303"). Prefer this over
+   * `practice_id`, which is NOT unique across offices.
+   */
+  office_id: string;
+  partner_id?: string;
+  /**
+   * NOT unique across offices — the live API can return the same value (e.g.
+   * "1") for multiple offices. Use `office_id` as the unique identifier.
+   */
+  practice_id: string;
+  /**
+   * Raw practice management system name from the provider. Inconsistent in
+   * case/spelling (e.g. "Opendental" vs "OpenDental"); not normalized.
+   */
+  practice_management_system: string;
+  practice_management_system_refresh_date: string;
+  practice_management_system_refresh_date_time_zone?: string;
+  practice_management_system_refresh_date_time_zone_utc_offset?: string;
+  practice_management_system_version: string;
+  practice_name: string;
+  secret_key: string;
+  state: string;
+  zip: string;
+};
+
+/**
+ * Parameters for listing authorized practices
+ */
+export type SikkaAuthorizedPracticeListParams = {
+  /**
+   * Financial system
+   */
+  financial_system?: string;
+  /**
+   * Financial system version
+   */
+  financial_system_version?: string;
+  /**
+   * Results per page
+   */
+  limit?: number;
+  /**
+   * Pagination offset
+   */
+  offset?: number;
+  /**
+   * Practice ID
+   */
+  practice_id?: string;
+  /**
+   * Practice management system
+   */
+  practice_management_system?: string;
+  /**
+   * Practice management system refresh date time zone
+   */
+  practice_management_system_refresh_date_time_zone?: string;
+  /**
+   * Practice management system version
+   */
+  practice_management_system_version?: string;
+  /**
+   * Practice name
+   */
+  practice_name?: string;
+  /**
+   * value should be 'all'. API returns by default practice id 1.
+   * Use this parameter to get all practices.
+   */
+  show?: 'all';
+  /**
+   * Sort order for results
+   */
+  sort_by?: 'office_id' | 'practice_id';
+};
+
+/**
+ * Response from the authorized_practices endpoint
+ */
+export type SikkaAuthorizedPracticeListResponse =
+  SikkaPaginatedResponse<SikkaAuthorizedPractice>;

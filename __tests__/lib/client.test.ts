@@ -1,5 +1,7 @@
 import { createSikkaClient, SikkaClient } from '../../src/lib/client.js';
 import {
+  type SikkaAuthorizedPractice,
+  type SikkaAuthorizedPracticeListResponse,
   type SikkaClaimListResponse,
   type SikkaClaimPaymentRequest,
   type SikkaClaimPaymentResponse,
@@ -55,6 +57,38 @@ const createRequestKeyResponse = (
     status: 'active',
   };
 };
+
+/**
+ * Create a mock authorized practice record with sensible defaults.
+ */
+const createAuthorizedPractice = (
+  overrides: Partial<SikkaAuthorizedPractice> = {},
+): SikkaAuthorizedPractice => ({
+  address: '123 Main St',
+  city: 'Miami',
+  data_insert_date: '2024-01-15T00:00:00',
+  data_synchronization_date: '2024-01-15T00:00:00',
+  difference_in_minutes: '0',
+  domain: 'test-domain',
+  email: 'office@example.com',
+  financial_system: 'QuickBooks',
+  financial_system_refresh_date: '2024-01-15T00:00:00',
+  financial_system_version: '1.0',
+  href: 'https://api.sikkasoft.com/v4/authorized_practices/1',
+  office_id: 'D13303',
+  partner_id: 'partner-1',
+  practice_id: '1',
+  practice_management_system: 'Dentrix',
+  practice_management_system_refresh_date: '2024-01-15T00:00:00',
+  practice_management_system_refresh_date_time_zone: 'EST',
+  practice_management_system_refresh_date_time_zone_utc_offset: '-05:00',
+  practice_management_system_version: 'G7',
+  practice_name: 'Test Practice',
+  secret_key: 'secret-key',
+  state: 'FL',
+  zip: '33155',
+  ...overrides,
+});
 
 describe('SikkaClient', () => {
   let client: SikkaClient;
@@ -1021,6 +1055,251 @@ describe('SikkaClient', () => {
       const url = new URL(lastCall[0]);
       expect(url.pathname).toBe('/v4/subscribers');
       expect(url.searchParams.get('patient_id')).toBe('994');
+    });
+  });
+
+  describe('authorizedPractices.list', () => {
+    beforeEach(async () => {
+      const mockResponse = createRequestKeyResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(mockResponse),
+        ok: true,
+      });
+      await client.authenticate();
+    });
+
+    it('should return array of authorized practices', async () => {
+      const authorizedPracticesResponse: SikkaAuthorizedPracticeListResponse = {
+        execution_time: '12',
+        items: [
+          {
+            address: '123 Main St',
+            city: 'Miami',
+            data_insert_date: '2024-01-15T00:00:00',
+            data_synchronization_date: '2024-01-15T00:00:00',
+            difference_in_minutes: '0',
+            domain: 'test-domain',
+            financial_system: 'QuickBooks',
+            financial_system_refresh_date: '2024-01-15T00:00:00',
+            financial_system_version: '1.0',
+            href: 'https://api.sikkasoft.com/v4/authorized_practices/1',
+            office_id: 'test-office-id',
+            partner_id: 'partner-1',
+            practice_id: '1',
+            practice_management_system: 'Dentrix',
+            practice_management_system_refresh_date: '2024-01-15T00:00:00',
+            practice_management_system_refresh_date_time_zone: 'EST',
+            practice_management_system_version: 'G7',
+            practice_name: 'Test Practice',
+            secret_key: 'secret-key',
+            state: 'FL',
+            zip: '33155',
+          },
+        ],
+        limit: '500',
+        offset: '0',
+        pagination: {
+          current: '1',
+          first: '1',
+          last: '1',
+          next: '',
+          previous: '',
+        },
+        total_count: '1',
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(JSON.stringify(authorizedPracticesResponse)),
+      });
+
+      const practices = await client.authorizedPractices.list({
+        show: 'all',
+      });
+
+      expect(practices).toHaveLength(1);
+      expect(practices[0].practice_id).toBe('1');
+      expect(practices[0].practice_name).toBe('Test Practice');
+      expect(practices[0].practice_management_system).toBe('Dentrix');
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const url = new URL(lastCall[0]);
+      expect(url.pathname).toBe('/v4/authorized_practices');
+      expect(url.searchParams.get('show')).toBe('all');
+    });
+
+    it('should auto-paginate across multiple pages', async () => {
+      // Sikka uses a 0-indexed PAGE NUMBER for `offset` (next page = offset + 1
+      // with `limit` held constant), so the next link points at offset=1.
+      const firstPage: SikkaAuthorizedPracticeListResponse = {
+        execution_time: '12',
+        items: [
+          createAuthorizedPractice({ office_id: 'D00001' }),
+          createAuthorizedPractice({ office_id: 'D00002' }),
+        ],
+        limit: '2',
+        offset: '0',
+        pagination: {
+          current:
+            'https://api.sikkasoft.com/v4/authorized_practices?offset=0&limit=2',
+          first:
+            'https://api.sikkasoft.com/v4/authorized_practices?offset=0&limit=2',
+          last: 'https://api.sikkasoft.com/v4/authorized_practices?offset=1&limit=2',
+          next: 'https://api.sikkasoft.com/v4/authorized_practices?offset=1&limit=2',
+          previous: '',
+        },
+        total_count: '3',
+      };
+      const secondPage: SikkaAuthorizedPracticeListResponse = {
+        execution_time: '12',
+        items: [createAuthorizedPractice({ office_id: 'D00003' })],
+        limit: '2',
+        offset: '1',
+        pagination: {
+          current:
+            'https://api.sikkasoft.com/v4/authorized_practices?offset=1&limit=2',
+          first:
+            'https://api.sikkasoft.com/v4/authorized_practices?offset=0&limit=2',
+          last: 'https://api.sikkasoft.com/v4/authorized_practices?offset=1&limit=2',
+          next: '',
+          previous:
+            'https://api.sikkasoft.com/v4/authorized_practices?offset=0&limit=2',
+        },
+        total_count: '3',
+      };
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          text: () => Promise.resolve(JSON.stringify(firstPage)),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          text: () => Promise.resolve(JSON.stringify(secondPage)),
+        });
+
+      const practices = await client.authorizedPractices.list({
+        limit: 2,
+        show: 'all',
+      });
+
+      expect(practices).toHaveLength(3);
+      expect(practices.map((practice) => practice.office_id)).toEqual([
+        'D00001',
+        'D00002',
+        'D00003',
+      ]);
+
+      // Two data requests were made (the auth request is the first call).
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      const firstDataUrl = new URL(mockFetch.mock.calls[1][0]);
+      const secondDataUrl = new URL(mockFetch.mock.calls[2][0]);
+      expect(firstDataUrl.searchParams.get('offset')).toBe('0');
+      // Page-number semantics: second page is offset + 1, NOT offset + limit.
+      expect(secondDataUrl.searchParams.get('offset')).toBe('1');
+      expect(secondDataUrl.searchParams.get('limit')).toBe('2');
+    });
+  });
+
+  describe('authorizedPractices.getByOfficeId', () => {
+    beforeEach(async () => {
+      const mockResponse = createRequestKeyResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(mockResponse),
+        ok: true,
+      });
+      await client.authenticate();
+    });
+
+    it('should return the practice matching the office_id', async () => {
+      const response: SikkaAuthorizedPracticeListResponse = {
+        execution_time: '12',
+        items: [
+          createAuthorizedPractice({
+            office_id: 'D11111',
+            practice_management_system: 'EagleSoft',
+          }),
+          createAuthorizedPractice({
+            office_id: 'D13303',
+            practice_management_system: 'OpenDental',
+          }),
+        ],
+        limit: '500',
+        offset: '0',
+        pagination: {
+          current: '1',
+          first: '1',
+          last: '1',
+          next: '',
+          previous: '',
+        },
+        total_count: '2',
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(response)),
+      });
+
+      const practice = await client.authorizedPractices.getByOfficeId('D13303');
+
+      expect(practice).not.toBeNull();
+      expect(practice?.office_id).toBe('D13303');
+      // Raw PMS string is returned without normalization.
+      expect(practice?.practice_management_system).toBe('OpenDental');
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const url = new URL(lastCall[0]);
+      expect(url.pathname).toBe('/v4/authorized_practices');
+      expect(url.searchParams.get('show')).toBe('all');
+    });
+
+    it('should return null when no office_id matches', async () => {
+      const response: SikkaAuthorizedPracticeListResponse = {
+        execution_time: '12',
+        items: [createAuthorizedPractice({ office_id: 'D11111' })],
+        limit: '500',
+        offset: '0',
+        pagination: {
+          current: '1',
+          first: '1',
+          last: '1',
+          next: '',
+          previous: '',
+        },
+        total_count: '1',
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(response)),
+      });
+
+      const practice = await client.authorizedPractices.getByOfficeId('D99999');
+
+      expect(practice).toBeNull();
+    });
+
+    it('should match office_id case-sensitively', async () => {
+      const response: SikkaAuthorizedPracticeListResponse = {
+        execution_time: '12',
+        items: [createAuthorizedPractice({ office_id: 'D13303' })],
+        limit: '500',
+        offset: '0',
+        pagination: {
+          current: '1',
+          first: '1',
+          last: '1',
+          next: '',
+          previous: '',
+        },
+        total_count: '1',
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(response)),
+      });
+
+      const practice = await client.authorizedPractices.getByOfficeId('d13303');
+
+      expect(practice).toBeNull();
     });
   });
 
