@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v1.8.0](https://github.com/fincura-ai/sikka-sdk-js/compare/8ae134ba97a54b37705e9ed2975872945466176c..v1.8.0) - 2026-06-24
+#### 🌟 Features
+-  App-scoped GET helper - ([8ae134b](https://github.com/fincura-ai/sikka-sdk-js/commit/8ae134ba97a54b37705e9ed2975872945466176c)) - louis-lamoureux
+
+- - -
+
 ## [v1.7.0](https://github.com/fincura-ai/sikka-sdk-js/compare/0ad094bc1f56932ec402cfcf124a2b188f0d0aa7..v1.7.0) - 2026-06-24
 #### 🌟 Features
 - add authorized_practices endpoint (#11) - ([0ad094b](https://github.com/fincura-ai/sikka-sdk-js/commit/0ad094bc1f56932ec402cfcf124a2b188f0d0aa7)) - [@louis-lamoureux](https://github.com/louis-lamoureux)
