@@ -87,6 +87,10 @@ export class SikkaClient {
    * Authorized practices endpoints.
    * Returns your authorized practices with the Sikka practice utility last
    * refresh and data insert times.
+   *
+   * This is an application-scoped resource: requests authenticate with the
+   * application credentials (`App-Id` / `App-Key` headers), so no prior
+   * `authenticate()` call is required.
    */
   public readonly authorizedPractices = {
     /**
@@ -98,6 +102,7 @@ export class SikkaClient {
      *
      * Internally this lists all authorized practices (`show: 'all'`, with
      * auto-pagination) and returns the first record whose `office_id` matches.
+     * Application-scoped: no prior `authenticate()` call is required.
      *
      * @param officeId - The unique office ID to look up
      * @returns The matching authorized practice, or `null` if none matches
@@ -126,6 +131,9 @@ export class SikkaClient {
      * retrieve every authorized office. This method follows the response
      * pagination (offset/limit + `pagination.next`) and accumulates all pages,
      * so the returned array contains every matching record.
+     *
+     * Application-scoped: requests use the `App-Id` / `App-Key` headers, so no
+     * prior `authenticate()` call is required.
      *
      * Items are returned RAW: no normalization, filtering, or coercion is
      * applied. In particular, `practice_management_system` values are
@@ -167,7 +175,7 @@ export class SikkaClient {
 
       for (;;) {
         const response: SikkaAuthorizedPracticeListResponse =
-          await this.get<SikkaAuthorizedPracticeListResponse>(
+          await this.appAuthGet<SikkaAuthorizedPracticeListResponse>(
             '/v4/authorized_practices',
             { ...params, limit, offset },
           );
@@ -566,6 +574,63 @@ export class SikkaClient {
   constructor(config: SikkaClientConfig) {
     this.baseUrl = config.baseUrl ?? SIKKA_BASE_URL;
     this.credentials = config.credentials;
+  }
+
+  /**
+   * Make an application-scoped GET request to the Sikka API.
+   *
+   * Used for endpoints that authenticate with the application credentials
+   * (`App-Id` / `App-Key` headers) rather than the per-office request_key
+   * scheme — e.g. `/v4/authorized_practices`. This does NOT require a prior
+   * `authenticate()` call and does NOT set the `request_key` query param.
+   */
+  async appAuthGet<T>(
+    endpoint: string,
+    params?: Record<string, unknown>,
+  ): Promise<T> {
+    const log = getLogger();
+
+    const url = new URL(`${this.baseUrl}${endpoint}`);
+
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        if (value !== null && value !== undefined) {
+          url.searchParams.set(key, String(value));
+        }
+      }
+    }
+
+    log.debug('Sikka API app-auth GET request', { endpoint, params });
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'App-Id': this.credentials.appId,
+        'App-Key': this.credentials.appKey,
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(
+        `Sikka API GET ${endpoint} failed: ${response.status} ${response.statusText} - ${errorBody}`,
+      );
+    }
+
+    const text = await response.text();
+    if (!text || text.trim() === '') {
+      return { items: [] } as T;
+    }
+
+    const data = JSON.parse(text) as T;
+
+    log.debug('Sikka API app-auth GET response', {
+      endpoint,
+      status: response.status,
+    });
+
+    return data;
   }
 
   /**

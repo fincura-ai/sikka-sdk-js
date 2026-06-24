@@ -1059,15 +1059,6 @@ describe('SikkaClient', () => {
   });
 
   describe('authorizedPractices.list', () => {
-    beforeEach(async () => {
-      const mockResponse = createRequestKeyResponse();
-      mockFetch.mockResolvedValueOnce({
-        json: () => Promise.resolve(mockResponse),
-        ok: true,
-      });
-      await client.authenticate();
-    });
-
     it('should return array of authorized practices', async () => {
       const authorizedPracticesResponse: SikkaAuthorizedPracticeListResponse = {
         execution_time: '12',
@@ -1126,6 +1117,13 @@ describe('SikkaClient', () => {
       const url = new URL(lastCall[0]);
       expect(url.pathname).toBe('/v4/authorized_practices');
       expect(url.searchParams.get('show')).toBe('all');
+
+      // Application-scoped auth: App-Id / App-Key headers, no request_key.
+      const { headers } = lastCall[1];
+      expect(headers['App-Id']).toBe(mockCredentials.appId);
+      expect(headers['App-Key']).toBe(mockCredentials.appKey);
+      expect(headers['Request-Key']).toBeUndefined();
+      expect(url.searchParams.get('request_key')).toBeNull();
     });
 
     it('should auto-paginate across multiple pages', async () => {
@@ -1189,10 +1187,11 @@ describe('SikkaClient', () => {
         'D00003',
       ]);
 
-      // Two data requests were made (the auth request is the first call).
-      expect(mockFetch).toHaveBeenCalledTimes(3);
-      const firstDataUrl = new URL(mockFetch.mock.calls[1][0]);
-      const secondDataUrl = new URL(mockFetch.mock.calls[2][0]);
+      // Two data requests were made; no separate auth request is needed since
+      // this endpoint is application-scoped.
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      const firstDataUrl = new URL(mockFetch.mock.calls[0][0]);
+      const secondDataUrl = new URL(mockFetch.mock.calls[1][0]);
       expect(firstDataUrl.searchParams.get('offset')).toBe('0');
       // Page-number semantics: second page is offset + 1, NOT offset + limit.
       expect(secondDataUrl.searchParams.get('offset')).toBe('1');
@@ -1201,15 +1200,6 @@ describe('SikkaClient', () => {
   });
 
   describe('authorizedPractices.getByOfficeId', () => {
-    beforeEach(async () => {
-      const mockResponse = createRequestKeyResponse();
-      mockFetch.mockResolvedValueOnce({
-        json: () => Promise.resolve(mockResponse),
-        ok: true,
-      });
-      await client.authenticate();
-    });
-
     it('should return the practice matching the office_id', async () => {
       const response: SikkaAuthorizedPracticeListResponse = {
         execution_time: '12',
@@ -1250,6 +1240,13 @@ describe('SikkaClient', () => {
       const url = new URL(lastCall[0]);
       expect(url.pathname).toBe('/v4/authorized_practices');
       expect(url.searchParams.get('show')).toBe('all');
+
+      // Application-scoped auth: App-Id / App-Key headers, no request_key.
+      const { headers } = lastCall[1];
+      expect(headers['App-Id']).toBe(mockCredentials.appId);
+      expect(headers['App-Key']).toBe(mockCredentials.appKey);
+      expect(headers['Request-Key']).toBeUndefined();
+      expect(url.searchParams.get('request_key')).toBeNull();
     });
 
     it('should return null when no office_id matches', async () => {
