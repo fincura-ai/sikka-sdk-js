@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v1.7.0](https://github.com/fincura-ai/sikka-sdk-js/compare/0ad094bc1f56932ec402cfcf124a2b188f0d0aa7..v1.7.0) - 2026-06-24
+#### 🌟 Features
+- add authorized_practices endpoint (#11) - ([0ad094b](https://github.com/fincura-ai/sikka-sdk-js/commit/0ad094bc1f56932ec402cfcf124a2b188f0d0aa7)) - [@louis-lamoureux](https://github.com/louis-lamoureux)
+
+- - -
+
 ## [v1.6.0](https://github.com/fincura-ai/sikka-sdk-js/compare/2f3b8c18d090a86534fabbd32a8f651d7c09a58b..v1.6.0) - 2026-06-02
 #### 🌟 Features
 - add subscribers endpoint - ([387d986](https://github.com/fincura-ai/sikka-sdk-js/commit/387d986cbbfb04dc58a73a400a70e26c77bb86b0)) - louis-lamoureux
