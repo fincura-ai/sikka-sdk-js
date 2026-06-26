@@ -199,6 +199,36 @@ const cashType = await sikka.paymentTypes.list({ code: '1' });
 
 ---
 
+### PMS Users
+
+> [!NOTE]
+> **Provisional.** Surfaced to support the Eaglesoft-only `user` field on `claimPayment.post()`. The `/v4/pms_users` path is confirmed, but the per-item response shape is pending written confirmation from Sikka support.
+
+#### `pmsUsers.list(params)`
+
+List the users configured in the practice management system. Use this to resolve a valid value for the Eaglesoft-only `user` writeback field.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `practice_id` | string | | Filter by practice ID |
+| `user_id` | string | | Filter by PMS user ID |
+| `limit` | number | | Results per page |
+| `offset` | number | | Pagination offset |
+
+**Returns:** `Promise<SikkaPmsUser[]>`
+
+```typescript
+// Get all PMS users
+const users = await sikka.pmsUsers.list();
+
+// Resolve a value for the Eaglesoft `user` writeback field
+const userId = users[0]?.user_id;
+```
+
+---
+
 ### Insurance Company Details
 
 #### `insuranceCompanyDetails.list(params)`
@@ -331,6 +361,19 @@ Post a payment to a claim. Uses pipe-delimited values for posting payments acros
 | `is_payment_by_procedure_code` | string | ✓ | `'true'` or `'false'` |
 | `note` | string | ✓ | Payment notes |
 
+> [!NOTE]
+> **Eaglesoft-only fields (provisional).** The following fields are accepted only by the Eaglesoft writeback contract — sending them on other PMSs (Dentrix, Open Dental, Tracker) is unsupported. Field names/accepted values are sourced from Sikka's developer portal and are pending written confirmation from Sikka support; treat as provisional.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `impacts` | string | | How the payment is booked. Likely `Collection` or `Adjustment`; defaults to `Adjustment` when omitted. Eaglesoft-only. |
+| `is_final_payment` | string | | `'true'` (default) or `'false'`. Set `'false'` on every call except the last when posting a claim across multiple provider groups. Eaglesoft-only. |
+| `is_credit_adjustment_writeback` | string | | `'true'` or `'false'`. Triggers a credit adjustment (write-off) write-back. Eaglesoft-only. |
+| `credit_adjustment_amount` | string | | Credit adjustment amount(s) (xx.xx), pipe-delimited per procedure. Eaglesoft-only. |
+| `credit_adjustment_transaction_sr_no` | string | | Transaction ID(s) the credit adjustment applies to, pipe-delimited per procedure. Eaglesoft-only. |
+| `credit_adjustment_type` | string | | Credit adjustment type ID (from `payment_types` with `is_adjustment_type=true`). Eaglesoft-only. |
+| `user` | string | | PMS user the writeback is attributed to (from the `pms_users` API). Eaglesoft-only. |
+
 **Returns:** `Promise<SikkaClaimPaymentResponse>`
 
 ```typescript
@@ -388,6 +431,11 @@ import type {
   SikkaPaymentType,
   SikkaPaymentTypeListParams,
   SikkaPaymentTypeListResponse,
+
+  // PMS Users
+  SikkaPmsUser,
+  SikkaPmsUserListParams,
+  SikkaPmsUserListResponse,
 
   // Insurance Company Details
   SikkaInsuranceCompanyDetail,

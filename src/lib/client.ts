@@ -24,6 +24,9 @@ import {
   type SikkaPaymentType,
   type SikkaPaymentTypeListParams,
   type SikkaPaymentTypeListResponse,
+  type SikkaPmsUser,
+  type SikkaPmsUserListParams,
+  type SikkaPmsUserListResponse,
   type SikkaPracticeVariable,
   type SikkaPracticeVariableListParams,
   type SikkaPracticeVariableListResponse,
@@ -411,6 +414,41 @@ export class SikkaClient {
     ): Promise<SikkaPaymentType[]> => {
       const response = await this.get<SikkaPaymentTypeListResponse>(
         '/v4/payment_types',
+        params,
+      );
+      return response.items;
+    },
+  };
+
+  /**
+   * PMS users endpoints.
+   * Returns the users configured in the practice management system.
+   *
+   * Provisional: surfaced to support the Eaglesoft-only `user` writeback field
+   * on `claimPayment.post()`. The `/v4/pms_users` path is confirmed, but the
+   * per-item response shape is pending written confirmation from Sikka support.
+   */
+  public readonly pmsUsers = {
+    /**
+     * List PMS users for the practice.
+     *
+     * @param params - Optional filter and pagination parameters
+     * @returns List of PMS users
+     *
+     * @example
+     * ```typescript
+     * // Get all PMS users
+     * const users = await client.pmsUsers.list();
+     *
+     * // Resolve a value for the Eaglesoft `user` writeback field
+     * const userId = users[0]?.user_id;
+     * ```
+     */
+    list: async (
+      params: SikkaPmsUserListParams = {},
+    ): Promise<SikkaPmsUser[]> => {
+      const response = await this.get<SikkaPmsUserListResponse>(
+        '/v4/pms_users',
         params,
       );
       return response.items;

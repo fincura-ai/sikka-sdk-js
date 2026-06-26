@@ -10,6 +10,7 @@ import {
   type SikkaInsuranceCompanyDetailListResponse,
   type SikkaPatientListResponse,
   type SikkaPaymentTypeListResponse,
+  type SikkaPmsUserListResponse,
   type SikkaPracticeVariableListResponse,
   type SikkaRequestKeyResponse,
   type SikkaSubscriberListResponse,
@@ -607,6 +608,82 @@ describe('SikkaClient', () => {
       expect(sentBody.direct_deposit_number).toBe('DD98765');
       expect(sentBody.provider_id).toBe('PROV001');
     });
+
+    it('should include Eaglesoft-specific fields when provided', async () => {
+      const paymentResponse = createClaimPaymentResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(paymentResponse),
+        ok: true,
+      });
+
+      const request: SikkaClaimPaymentRequest = {
+        claim_payment_date: '2024-01-15',
+        claim_sr_no: '123456',
+        credit_adjustment_amount: '10.00|5.00',
+        credit_adjustment_transaction_sr_no: '789|790',
+        credit_adjustment_type: 'CADJ001',
+        deductible: '0',
+        impacts: 'Collection',
+        is_credit_adjustment_writeback: 'true',
+        is_final_payment: 'false',
+        is_payment_by_procedure_code: 'false',
+        payment_amount: '100.00',
+        payment_mode: 'EFT',
+        practice_id: 'practice-1',
+        user: 'pms-user-1',
+        write_off: '0',
+      };
+
+      const result = await client.claimPayment.post(request);
+
+      expect(result).toMatchObject(paymentResponse);
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const sentBody = JSON.parse(lastCall[1].body);
+      expect(sentBody.impacts).toBe('Collection');
+      expect(sentBody.is_final_payment).toBe('false');
+      expect(sentBody.is_credit_adjustment_writeback).toBe('true');
+      expect(sentBody.credit_adjustment_amount).toBe('10.00|5.00');
+      expect(sentBody.credit_adjustment_transaction_sr_no).toBe('789|790');
+      expect(sentBody.credit_adjustment_type).toBe('CADJ001');
+      expect(sentBody.user).toBe('pms-user-1');
+    });
+
+    it('should not serialize Eaglesoft fields when omitted (Dentrix payload unchanged)', async () => {
+      const paymentResponse = createClaimPaymentResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(paymentResponse),
+        ok: true,
+      });
+
+      const request: SikkaClaimPaymentRequest = {
+        claim_payment_date: '2024-01-15',
+        claim_sr_no: '123456',
+        deductible: '0',
+        is_payment_by_procedure_code: 'false',
+        payment_amount: '100.00',
+        payment_mode: 'EFT',
+        practice_id: 'practice-1',
+        write_off: '0',
+      };
+
+      await client.claimPayment.post(request);
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      // The serialized body must be byte-identical to the input request: no
+      // Eaglesoft keys leak in for non-Eaglesoft (Dentrix) payloads.
+      expect(lastCall[1].body).toBe(JSON.stringify(request));
+
+      const sentBody = JSON.parse(lastCall[1].body);
+      expect(sentBody).not.toHaveProperty('impacts');
+      expect(sentBody).not.toHaveProperty('is_final_payment');
+      expect(sentBody).not.toHaveProperty('is_credit_adjustment_writeback');
+      expect(sentBody).not.toHaveProperty('credit_adjustment_amount');
+      expect(sentBody).not.toHaveProperty(
+        'credit_adjustment_transaction_sr_no',
+      );
+      expect(sentBody).not.toHaveProperty('credit_adjustment_type');
+      expect(sentBody).not.toHaveProperty('user');
+    });
   });
 
   describe('writebackStatus.get', () => {
@@ -830,6 +907,60 @@ describe('SikkaClient', () => {
       expect(types[0].description).toBe('Cash Payment');
       expect(types[1].code).toBe('2');
       expect(types[1].description).toBe('Insurance Payment');
+    });
+  });
+
+  describe('pmsUsers.list', () => {
+    beforeEach(async () => {
+      const mockResponse = createRequestKeyResponse();
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve(mockResponse),
+        ok: true,
+      });
+      await client.authenticate();
+    });
+
+    it('should return array of PMS users', async () => {
+      const pmsUsersResponse: SikkaPmsUserListResponse = {
+        execution_time: '0.1s',
+        items: [
+          {
+            first_name: 'Jane',
+            href: 'https://api.sikkasoft.com/v4/practices/1/pms_users/10',
+            last_name: 'Doe',
+            practice_href: 'https://api.sikkasoft.com/v4/practices/1',
+            practice_id: '1',
+            status: 'active',
+            user_id: '10',
+            user_name: 'jdoe',
+          },
+        ],
+        limit: '500',
+        offset: '0',
+        pagination: {
+          current: '1',
+          first: '1',
+          last: '1',
+          next: '',
+          previous: '',
+        },
+        total_count: '1',
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(pmsUsersResponse)),
+      });
+
+      const users = await client.pmsUsers.list({ practice_id: '1' });
+
+      expect(users).toHaveLength(1);
+      expect(users[0].user_id).toBe('10');
+      expect(users[0].user_name).toBe('jdoe');
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const url = new URL(lastCall[0]);
+      expect(url.pathname).toBe('/v4/pms_users');
+      expect(url.searchParams.get('practice_id')).toBe('1');
     });
   });
 

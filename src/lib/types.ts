@@ -467,6 +467,60 @@ export type SikkaClaimPaymentRequest = {
    */
   credit_adjustment_provider?: string;
 
+  // ---------------------------------------------------------------------------
+  // Eaglesoft-specific fields
+  //
+  // The following fields are accepted only by the Eaglesoft writeback contract.
+  // Sending them on other PMSs (Dentrix, Open Dental, Tracker) is unsupported.
+  // Field names/accepted values are sourced from Sikka's developer portal and
+  // are pending written confirmation from Sikka support; treat as provisional.
+
+  /**
+   * How the payment is booked in Eaglesoft. Required for Eaglesoft; when
+   * omitted Eaglesoft defaults the writeback to `Adjustment` rather than a
+   * collection. Likely values: `Collection` | `Adjustment`. Eaglesoft-only.
+   */
+  impacts?: string;
+
+  /**
+   * Whether this call finalizes the claim in Eaglesoft. Defaults to `true`
+   * when omitted, which closes the claim after the first call — set `'false'`
+   * on every call except the last when a claim is posted across multiple
+   * provider groups. Eaglesoft-only.
+   */
+  is_final_payment?: 'false' | 'true';
+
+  /**
+   * Boolean to trigger a credit adjustment (write-off) write-back in Eaglesoft.
+   * Eaglesoft uses this family instead of the Dentrix `write_off` /
+   * `adjustment_type` fields. Eaglesoft-only.
+   */
+  is_credit_adjustment_writeback?: 'false' | 'true';
+
+  /**
+   * The credit adjustment (write-off) amount(s) for Eaglesoft (format: xx.xx).
+   * Pipe-delimited when applied per procedure. Eaglesoft-only.
+   */
+  credit_adjustment_amount?: string;
+
+  /**
+   * Transaction ID(s) the Eaglesoft credit adjustment applies to.
+   * Pipe-delimited when applied per procedure. Eaglesoft-only.
+   */
+  credit_adjustment_transaction_sr_no?: string;
+
+  /**
+   * The credit adjustment type ID for Eaglesoft.
+   * Get from payment_types API with is_adjustment_type=true. Eaglesoft-only.
+   */
+  credit_adjustment_type?: string;
+
+  /**
+   * The PMS user the writeback is attributed to in Eaglesoft.
+   * Get from the pms_users API. Eaglesoft-only.
+   */
+  user?: string;
+
   /**
    * Boolean to trigger a debit adjustment write-back.
    * Not supported for Tracker.
@@ -664,6 +718,60 @@ export type SikkaPaymentTypeListParams = {
  */
 export type SikkaPaymentTypeListResponse =
   SikkaPaginatedResponse<SikkaPaymentType>;
+
+// -----------------------------------------------------------------------------
+// PMS User Types
+//
+// Provisional: surfaced to support the Eaglesoft-only `user` field on
+// SikkaClaimPaymentRequest. The `/v4/pms_users` endpoint path is confirmed and
+// uses the standard Sikka paginated envelope, but the per-item field set is
+// pending written confirmation from Sikka support; treat as provisional.
+
+/**
+ * Sikka PMS user record.
+ * Represents a user configured in the practice management system. Used to
+ * resolve a valid value for the Eaglesoft-only `user` writeback field.
+ *
+ * Provisional shape: additional fields may be returned by the live API
+ * (use `fields=get_all` on the endpoint to enumerate them).
+ */
+export type SikkaPmsUser = {
+  first_name: string;
+  href: string;
+  last_name: string;
+  practice_href: string;
+  practice_id: string;
+  status: string;
+  user_id: string;
+  user_name: string;
+};
+
+/**
+ * Parameters for listing PMS users
+ */
+export type SikkaPmsUserListParams = {
+  /**
+   * Results per page
+   */
+  limit?: number;
+  /**
+   * Pagination offset
+   */
+  offset?: number;
+  /**
+   * Practice ID of office
+   */
+  practice_id?: string;
+  /**
+   * Filter by PMS user ID
+   */
+  user_id?: string;
+};
+
+/**
+ * Response from the pms_users endpoint
+ */
+export type SikkaPmsUserListResponse = SikkaPaginatedResponse<SikkaPmsUser>;
 
 // -----------------------------------------------------------------------------
 // Practice Variable Types
