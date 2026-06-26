@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v1.9.0](https://github.com/fincura-ai/sikka-sdk-js/compare/2f7c3585183306b005472637785bb56a03d7ae92..v1.9.0) - 2026-06-26
+#### 🌟 Features
+- adapt to EagleSoft - ([2f7c358](https://github.com/fincura-ai/sikka-sdk-js/commit/2f7c3585183306b005472637785bb56a03d7ae92)) - louis-lamoureux
+
+- - -
+
 ## [v1.8.0](https://github.com/fincura-ai/sikka-sdk-js/compare/8ae134ba97a54b37705e9ed2975872945466176c..v1.8.0) - 2026-06-24
 #### 🌟 Features
 -  App-scoped GET helper - ([8ae134b](https://github.com/fincura-ai/sikka-sdk-js/commit/8ae134ba97a54b37705e9ed2975872945466176c)) - louis-lamoureux
