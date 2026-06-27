@@ -372,6 +372,7 @@ Post a payment to a claim. Uses pipe-delimited values for posting payments acros
 | `credit_adjustment_amount` | string | | Credit adjustment amount(s) (xx.xx), pipe-delimited per procedure. Eaglesoft-only. |
 | `credit_adjustment_transaction_sr_no` | string | | Transaction ID(s) the credit adjustment applies to, pipe-delimited per procedure. Eaglesoft-only. |
 | `credit_adjustment_type` | string | | Credit adjustment type ID (from `payment_types` with `is_adjustment_type=true`). Eaglesoft-only. |
+| `is_credit_adjustment_by_procedure` | string | | `'true'` or `'false'`. Set `'true'` when `credit_adjustment_*` values are pipe-delimited per procedure. Required by Eaglesoft whenever `is_credit_adjustment_writeback` is `'true'`. Eaglesoft-only. |
 | `user` | string | | PMS user the writeback is attributed to (from the `pms_users` API). Eaglesoft-only. |
 
 **Returns:** `Promise<SikkaClaimPaymentResponse>`

@@ -516,6 +516,14 @@ export type SikkaClaimPaymentRequest = {
   credit_adjustment_type?: string;
 
   /**
+   * Boolean for procedure-level credit adjustments in Eaglesoft.
+   * Set 'true' when credit_adjustment_* values are pipe-delimited per procedure.
+   * Required by Eaglesoft whenever is_credit_adjustment_writeback is 'true'.
+   * Symmetric to is_debit_adjustment_by_procedure. Eaglesoft-only.
+   */
+  is_credit_adjustment_by_procedure?: 'false' | 'true';
+
+  /**
    * The PMS user the writeback is attributed to in Eaglesoft.
    * Get from the pms_users API. Eaglesoft-only.
    */
