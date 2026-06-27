@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v1.10.0](https://github.com/fincura-ai/sikka-sdk-js/compare/0adcadc5c95881fe3218b40dd166cb515fcf13b2..v1.10.0) - 2026-06-27
+#### 🌟 Features
+- add credit_adjustment_type - ([0adcadc](https://github.com/fincura-ai/sikka-sdk-js/commit/0adcadc5c95881fe3218b40dd166cb515fcf13b2)) - louis-lamoureux
+
+- - -
+
 ## [v1.9.0](https://github.com/fincura-ai/sikka-sdk-js/compare/2f7c3585183306b005472637785bb56a03d7ae92..v1.9.0) - 2026-06-26
 #### 🌟 Features
 - adapt to EagleSoft - ([2f7c358](https://github.com/fincura-ai/sikka-sdk-js/commit/2f7c3585183306b005472637785bb56a03d7ae92)) - louis-lamoureux
