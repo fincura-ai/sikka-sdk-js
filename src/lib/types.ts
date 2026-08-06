@@ -1103,3 +1103,91 @@ export type SikkaAuthorizedPracticeListParams = {
  */
 export type SikkaAuthorizedPracticeListResponse =
   SikkaPaginatedResponse<SikkaAuthorizedPractice>;
+
+/**
+ * A practice management system data sync status record from the
+ * data_sync_status endpoint.
+ *
+ * Indicates whether the PMS integration is up to date. `status` should equal
+ * `"refresh"` to confirm data received via the API is current. Check
+ * `data_insert_date` for the latest data fetch time.
+ *
+ * IMPORTANT: `practice_id` is NOT unique across offices — use `office_id` as
+ * the unique identifier for a practice/office.
+ *
+ * Values such as `practice_management_system` are returned RAW from the
+ * provider and are inconsistent in case/spelling across records. The SDK does
+ * not normalize them; callers are responsible for any normalization.
+ */
+export type SikkaDataSyncStatus = {
+  data_insert_date: string;
+  domain: string;
+  /**
+   * Unique identifier for the office (e.g. "D1000"). Prefer this over
+   * `practice_id`, which is NOT unique across offices.
+   */
+  office_id: string;
+  /**
+   * NOT unique across offices — the live API can return the same value (e.g.
+   * "1") for multiple offices. Use `office_id` as the unique identifier.
+   */
+  practice_id: string;
+  /**
+   * Raw practice management system name from the provider. Inconsistent in
+   * case/spelling; not normalized.
+   */
+  practice_management_system: string;
+  practice_management_system_refresh_date_time_zone?: string;
+  practice_management_system_version: string;
+  practice_name: string;
+  /**
+   * Sync status. Typically `"refresh"` (connected & up to date) or
+   * `"not_refresh"` (unable to connect for more than 24 hours). Callers should
+   * check that this equals `"refresh"` before trusting API data.
+   */
+  status: string;
+};
+
+/**
+ * Parameters for listing data sync statuses
+ */
+export type SikkaDataSyncStatusListParams = {
+  /**
+   * Return practices refreshed within the last N minutes.
+   */
+  interval?: number;
+  /**
+   * Results per page
+   */
+  limit?: number;
+  /**
+   * Pagination offset
+   */
+  offset?: number;
+  /**
+   * Office ID from the authorized_practices API
+   */
+  office_id?: string;
+  /**
+   * Practice management system
+   */
+  practice_management_system?: string;
+  /**
+   * Practice name
+   */
+  practice_name?: string;
+  /**
+   * Sort order for results. Defaults to `office_id` on the API.
+   */
+  sort_by?: 'office_id' | 'practice_id';
+  /**
+   * Sync status filter (e.g. `"refresh"`, `"not_refresh"`)
+   */
+  status?: string;
+};
+
+/**
+ * Response from the data_sync_status endpoint
+ */
+export type SikkaDataSyncStatusListResponse =
+  SikkaPaginatedResponse<SikkaDataSyncStatus>;
