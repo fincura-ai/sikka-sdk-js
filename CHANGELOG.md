@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v1.11.0](https://github.com/fincura-ai/sikka-sdk-js/compare/b0d715bc81a5e46c92054676ec001c6d759d44d5..v1.11.0) - 2026-08-11
+#### 🌟 Features
+- add data_sync_status endpoint (#12) - ([47d80b0](https://github.com/fincura-ai/sikka-sdk-js/commit/47d80b0e2dc03ec126d24bbf6da46f8a0658a2a0)) - [@louis-lamoureux](https://github.com/louis-lamoureux)
+#### 🧹 Miscellaneous Chores
+- **(ci)** upgrade and pin actions - ([b0d715b](https://github.com/fincura-ai/sikka-sdk-js/commit/b0d715bc81a5e46c92054676ec001c6d759d44d5)) - [@sylver](https://github.com/sylver)
+
+- - -
+
 ## [v1.10.0](https://github.com/fincura-ai/sikka-sdk-js/compare/0adcadc5c95881fe3218b40dd166cb515fcf13b2..v1.10.0) - 2026-06-27
 #### 🌟 Features
 - add credit_adjustment_type - ([0adcadc](https://github.com/fincura-ai/sikka-sdk-js/commit/0adcadc5c95881fe3218b40dd166cb515fcf13b2)) - louis-lamoureux
