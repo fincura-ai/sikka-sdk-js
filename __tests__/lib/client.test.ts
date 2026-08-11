@@ -7,6 +7,8 @@ import {
   type SikkaClaimPaymentResponse,
   type SikkaClaimUpdateRequest,
   type SikkaClaimUpdateResponse,
+  type SikkaDataSyncStatus,
+  type SikkaDataSyncStatusListResponse,
   type SikkaInsuranceCompanyDetailListResponse,
   type SikkaPatientListResponse,
   type SikkaPaymentTypeListResponse,
@@ -88,6 +90,24 @@ const createAuthorizedPractice = (
   secret_key: 'secret-key',
   state: 'FL',
   zip: '33155',
+  ...overrides,
+});
+
+/**
+ * Create a mock data sync status record with sensible defaults.
+ */
+const createDataSyncStatus = (
+  overrides: Partial<SikkaDataSyncStatus> = {},
+): SikkaDataSyncStatus => ({
+  data_insert_date: '2022-03-28T01:40:31',
+  domain: 'Dental',
+  office_id: 'D1000',
+  practice_id: '1',
+  practice_management_system: 'Eclipse',
+  practice_management_system_refresh_date_time_zone: 'Eastern Standard Time',
+  practice_management_system_version: '2018',
+  practice_name: 'Pandya Clinics',
+  status: 'refresh',
   ...overrides,
 });
 
@@ -1428,6 +1448,167 @@ describe('SikkaClient', () => {
       const practice = await client.authorizedPractices.getByOfficeId('d13303');
 
       expect(practice).toBeNull();
+    });
+  });
+
+  describe('dataSyncStatus.list', () => {
+    it('should return array of data sync statuses', async () => {
+      const dataSyncStatusResponse: SikkaDataSyncStatusListResponse = {
+        execution_time: '528',
+        items: [
+          {
+            data_insert_date: '2022-03-28T01:40:31',
+            domain: 'Dental',
+            office_id: 'D1000',
+            practice_id: '1',
+            practice_management_system: 'Eclipse',
+            practice_management_system_refresh_date_time_zone:
+              'Eastern Standard Time',
+            practice_management_system_version: '2018',
+            practice_name: 'Pandya Clinics',
+            status: 'refresh',
+          },
+        ],
+        limit: '500',
+        offset: '0',
+        pagination: {
+          current: '1',
+          first: '1',
+          last: '1',
+          next: '',
+          previous: '',
+        },
+        total_count: '1',
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(dataSyncStatusResponse)),
+      });
+
+      const statuses = await client.dataSyncStatus.list();
+
+      expect(statuses).toHaveLength(1);
+      expect(statuses[0].office_id).toBe('D1000');
+      expect(statuses[0].status).toBe('refresh');
+      expect(statuses[0].practice_name).toBe('Pandya Clinics');
+      expect(statuses[0].data_insert_date).toBe('2022-03-28T01:40:31');
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const url = new URL(lastCall[0]);
+      expect(url.pathname).toBe('/v4/data_sync_status');
+
+      // Application-scoped auth: App-Id / App-Key headers, no request_key.
+      const { headers } = lastCall[1];
+      expect(headers['App-Id']).toBe(mockCredentials.appId);
+      expect(headers['App-Key']).toBe(mockCredentials.appKey);
+      expect(headers['Request-Key']).toBeUndefined();
+      expect(url.searchParams.get('request_key')).toBeNull();
+    });
+
+    it('should forward filter and sort parameters', async () => {
+      const response: SikkaDataSyncStatusListResponse = {
+        execution_time: '528',
+        items: [createDataSyncStatus()],
+        limit: '500',
+        offset: '0',
+        pagination: {
+          current: '1',
+          first: '1',
+          last: '1',
+          next: '',
+          previous: '',
+        },
+        total_count: '1',
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(response)),
+      });
+
+      await client.dataSyncStatus.list({
+        interval: 15,
+        office_id: 'D1000',
+        sort_by: 'practice_id',
+        status: 'refresh',
+      });
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const url = new URL(lastCall[0]);
+      expect(url.searchParams.get('interval')).toBe('15');
+      expect(url.searchParams.get('office_id')).toBe('D1000');
+      expect(url.searchParams.get('sort_by')).toBe('practice_id');
+      expect(url.searchParams.get('status')).toBe('refresh');
+    });
+
+    it('should auto-paginate across multiple pages', async () => {
+      // Sikka uses a 0-indexed PAGE NUMBER for `offset` (next page = offset + 1
+      // with `limit` held constant), so the next link points at offset=1.
+      const firstPage: SikkaDataSyncStatusListResponse = {
+        execution_time: '528',
+        items: [
+          createDataSyncStatus({ office_id: 'D00001' }),
+          createDataSyncStatus({ office_id: 'D00002' }),
+        ],
+        limit: '2',
+        offset: '0',
+        pagination: {
+          current:
+            'https://api.sikkasoft.com/v4/data_sync_status?offset=0&limit=2',
+          first:
+            'https://api.sikkasoft.com/v4/data_sync_status?offset=0&limit=2',
+          last: 'https://api.sikkasoft.com/v4/data_sync_status?offset=1&limit=2',
+          next: 'https://api.sikkasoft.com/v4/data_sync_status?offset=1&limit=2',
+          previous: '',
+        },
+        total_count: '3',
+      };
+      const secondPage: SikkaDataSyncStatusListResponse = {
+        execution_time: '528',
+        items: [createDataSyncStatus({ office_id: 'D00003' })],
+        limit: '2',
+        offset: '1',
+        pagination: {
+          current:
+            'https://api.sikkasoft.com/v4/data_sync_status?offset=1&limit=2',
+          first:
+            'https://api.sikkasoft.com/v4/data_sync_status?offset=0&limit=2',
+          last: 'https://api.sikkasoft.com/v4/data_sync_status?offset=1&limit=2',
+          next: '',
+          previous:
+            'https://api.sikkasoft.com/v4/data_sync_status?offset=0&limit=2',
+        },
+        total_count: '3',
+      };
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          text: () => Promise.resolve(JSON.stringify(firstPage)),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          text: () => Promise.resolve(JSON.stringify(secondPage)),
+        });
+
+      const statuses = await client.dataSyncStatus.list({
+        limit: 2,
+      });
+
+      expect(statuses).toHaveLength(3);
+      expect(statuses.map((status) => status.office_id)).toEqual([
+        'D00001',
+        'D00002',
+        'D00003',
+      ]);
+
+      // Two data requests were made; no separate auth request is needed since
+      // this endpoint is application-scoped.
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      const firstDataUrl = new URL(mockFetch.mock.calls[0][0]);
+      const secondDataUrl = new URL(mockFetch.mock.calls[1][0]);
+      expect(firstDataUrl.searchParams.get('offset')).toBe('0');
+      // Page-number semantics: second page is offset + 1, NOT offset + limit.
+      expect(secondDataUrl.searchParams.get('offset')).toBe('1');
+      expect(secondDataUrl.searchParams.get('limit')).toBe('2');
     });
   });
 

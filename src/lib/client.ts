@@ -15,6 +15,9 @@ import {
   type SikkaClaimUpdateResult,
   type SikkaClientConfig,
   type SikkaClientCredentials,
+  type SikkaDataSyncStatus,
+  type SikkaDataSyncStatusListParams,
+  type SikkaDataSyncStatusListResponse,
   type SikkaInsuranceCompanyDetail,
   type SikkaInsuranceCompanyDetailListParams,
   type SikkaInsuranceCompanyDetailListResponse,
@@ -50,6 +53,11 @@ const WRITEBACK_ID_PATTERN = /^Id:(\d+)$/u;
  * Page size used when auto-paginating the authorized_practices endpoint.
  */
 const AUTHORIZED_PRACTICES_PAGE_SIZE = 500;
+
+/**
+ * Page size used when auto-paginating the data_sync_status endpoint.
+ */
+const DATA_SYNC_STATUS_PAGE_SIZE = 500;
 
 /**
  * Extract the numeric writeback tracking ID from the long_message field.
@@ -324,6 +332,115 @@ export class SikkaClient {
       );
       const writebackId = parseWritebackId(response.long_message);
       return { ...response, writeback_id: writebackId };
+    },
+  };
+
+  /**
+   * Data sync status endpoints.
+   *
+   * Application-scoped: these requests authenticate with the client's
+   * application credentials (`App-Id` / `App-Key` headers), so no prior
+   * `authenticate()` call is required.
+   */
+  public readonly dataSyncStatus = {
+    /**
+     * List practice management system data sync statuses, auto-paginating to
+     * completion.
+     *
+     * Indicates whether the PMS integration is up to date. Callers should
+     * check that each item's `status` equals `"refresh"` before trusting data
+     * received via other API endpoints. Use `data_insert_date` for the latest
+     * data fetch time.
+     *
+     * This method follows the response pagination (offset/limit +
+     * `pagination.next`) and accumulates all pages, so the returned array
+     * contains every matching record.
+     *
+     * Application-scoped: requests use the `App-Id` / `App-Key` headers, so no
+     * prior `authenticate()` call is required.
+     *
+     * Items are returned RAW: no normalization, filtering, or coercion is
+     * applied. In particular, `practice_management_system` values are
+     * inconsistent in case/spelling across records — callers should normalize
+     * themselves.
+     *
+     * WARNING: `practice_id` is NOT unique across offices — key off `office_id`
+     * instead.
+     *
+     * @param params - Optional filter, sort, and pagination parameters. A
+     *   caller-supplied `offset`/`limit` controls the starting page and page
+     *   size; pagination then continues from there until all items are fetched.
+     *   Pass `interval` to limit results to practices refreshed in the last N
+     *   minutes.
+     * @returns List of all data sync status records across every page
+     *
+     * @example
+     * ```typescript
+     * // List all sync statuses
+     * const statuses = await client.dataSyncStatus.list();
+     *
+     * // Practices refreshed in the last 15 minutes with status "refresh"
+     * const fresh = await client.dataSyncStatus.list({
+     *   interval: 15,
+     *   status: 'refresh',
+     * });
+     *
+     * // Check a single office
+     * const [officeStatus] = await client.dataSyncStatus.list({
+     *   office_id: 'D1000',
+     * });
+     * if (officeStatus?.status === 'refresh') {
+     *   console.log('Data is up to date as of', officeStatus.data_insert_date);
+     * }
+     * ```
+     */
+    list: async (
+      params: SikkaDataSyncStatusListParams = {},
+    ): Promise<SikkaDataSyncStatus[]> => {
+      const items: SikkaDataSyncStatus[] = [];
+
+      // Sikka's `offset` is a 0-indexed PAGE NUMBER (not a record offset): the
+      // next page is `offset + 1` with `limit` held constant. To stay correct
+      // regardless of those semantics, we never compute the next offset
+      // ourselves — we follow the `pagination.next` URL's query params verbatim.
+      let offset: number | string = params.offset ?? 0;
+      let limit: number | string = params.limit ?? DATA_SYNC_STATUS_PAGE_SIZE;
+
+      for (;;) {
+        const response: SikkaDataSyncStatusListResponse =
+          await this.appAuthGet<SikkaDataSyncStatusListResponse>(
+            '/v4/data_sync_status',
+            { ...params, limit, offset },
+          );
+
+        const pageItems = response.items ?? [];
+        items.push(...pageItems);
+
+        const totalCount = Number.parseInt(response.total_count, 10);
+        const pageSize = Number.parseInt(String(limit), 10);
+        const nextUrl = response.pagination?.next;
+
+        // Stop when the page came back empty, we've reached the reported
+        // total, the API reported no next page, or the page was not full
+        // (a reliable "last page" signal that guards against infinite loops).
+        if (
+          pageItems.length === 0 ||
+          (!Number.isNaN(totalCount) && items.length >= totalCount) ||
+          !nextUrl ||
+          (!Number.isNaN(pageSize) && pageItems.length < pageSize)
+        ) {
+          break;
+        }
+
+        // Advance strictly by what the API tells us, rather than doing
+        // `offset += limit` arithmetic (which would be wrong for page-number
+        // semantics).
+        const nextSearch = new URL(nextUrl).searchParams;
+        offset = nextSearch.get('offset') ?? offset;
+        limit = nextSearch.get('limit') ?? limit;
+      }
+
+      return items;
     },
   };
 
